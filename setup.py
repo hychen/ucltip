@@ -13,5 +13,4 @@ setup(
     author_email = 'ossug.hychen@gmail.com',
     license = 'BSD License',
     packages=['ucltip'],
-    zip_safe=False,
 )

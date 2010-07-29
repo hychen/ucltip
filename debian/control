@@ -1,0 +1,14 @@
+Source: python-ucltip
+Section: python
+Priority: extra
+Maintainer: Hsin-Yi Chen (hychen) <ossyg.hychen@gmail.com>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.4
+Homepage: http://pypi.python.org/pypi/ucltip
+Vcs-Git: git://github.com/hychen/ucltip.git
+
+Package: python-ucltip
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: UCLTIP - Use command line tool in Python
+ This library make you easy to use command line tool in Python.
