@@ -1,12 +1,12 @@
 This work was packaged for Debian by:
 
-    Hsin-Yi Chen (hychen) <ossyg.hychen@gmail.com> on Thu, 29 Jul 2010 18:08:37 +0800
+    Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com> on Thu, 29 Jul 2010 18:08:37 +0800
 
 It was downloaded from http://pypi.python.org/pypi/ucltip
 
 Upstream Author(s):
 
-    Hsin-Yi Chen (hychen) <ossyg.hychen@gmail.com>
+    Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>
 
 Copyright:
 
@@ -34,7 +34,7 @@ found in `/usr/share/common-licenses/BSD'.
 
 The Debian packaging is:
 
-    Copyright (C) 2010 Hsin-Yi Chen (hychen) <ossyg.hychen@gmail.com>
+    Copyright (C) 2010 Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>
 
 and is licensed under the GPL version 2,
 see `/usr/share/common-licenses/GPL-2'.
