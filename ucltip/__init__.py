@@ -41,6 +41,9 @@ class SingleCmd(object):
            not commands.getoutput('whereis %s' % self.cmd)[len(self.cmd)+1:]:
             raise CommandNotFound()
 
+    def __repr__(self):
+        return "command object bound '%s'" % self.cmd
+
     def execute(self, command,
                       istream=None,
                       post_output=None,
@@ -133,7 +136,17 @@ class SingleCmd(object):
 
 class CmdDispatcher(SingleCmd):
 
+    def __init__(self, cmd, subcmd_prefix=None):
+        self.subcmd_prefix = subcmd_prefix
+        super(CmdDispatcher, self).__init__(cmd)
+
     def __getattr__(self, name):
         if name[:1] == '_':
             raise AttributeError(name)
         return lambda *args, **kwargs: self._call_process(*args, subcmd=dashify(name), **kwargs)
+
+def cmd(name, subcmd_prefix=None):
+    if not subcmd_prefix:
+        return SingleCmd(name)
+    else:
+        return CmdDispatcher(name, subcmd_prefix)
