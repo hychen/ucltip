@@ -48,7 +48,7 @@ class SingleCmd(object):
                       istream=None,
                       post_output=None,
                       with_raw_output=False,
-                      with_exception=True,
+                      with_exception=False,
                       with_extended_output=False):
         # Start the process
         proc = subprocess.Popen(command,
@@ -57,6 +57,8 @@ class SingleCmd(object):
                                 stdout=subprocess.PIPE,
                                 **extra
                                 )
+        if istream:
+            return proc
 
         # Wait for the process to return
         try:
@@ -136,9 +138,12 @@ class SingleCmd(object):
 
 class CmdDispatcher(SingleCmd):
 
-    def __init__(self, cmd, subcmd_prefix=None):
-        self.subcmd_prefix = subcmd_prefix
-        super(CmdDispatcher, self).__init__(cmd)
+    def __init__(self, cmd=None, subcmd_prefix=None):
+        if cmd:
+            self.cmd = cmd
+        if subcmd_prefix:
+            self.subcmd_prefix = subcmd_prefix
+        super(CmdDispatcher, self).__init__(self.cmd)
 
     def __getattr__(self, name):
         if name[:1] == '_':
