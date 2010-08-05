@@ -6,6 +6,5 @@
 build
 dist
 bdist
-MANIFEST
 debian/files
 debian/python-ucltip*
