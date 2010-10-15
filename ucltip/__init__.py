@@ -26,6 +26,7 @@ execute_kwargs = ('istream',
 
 class SingleCmd(object):
 
+    opt_style = 0
     cmd = None
     subcmd_prefix = None
     pre_subcmd = None
@@ -48,8 +49,9 @@ class SingleCmd(object):
                       istream=None,
                       post_output=None,
                       with_raw_output=False,
-                      with_exception=False,
+                      with_exception=True,
                       with_extended_output=False):
+
         # Start the process
         proc = subprocess.Popen(command,
                                 stdin=istream,
@@ -101,7 +103,11 @@ class SingleCmd(object):
                 if v is True:
                     args.append("--%s" % dashify(k))
                 elif type(v) is not bool:
-                    args.append("--%s=%s" % (dashify(k), v))
+                    if self.opt_style == 1:
+                        args.append("--%s" % dashify(k))
+                        args.append("%s" % v)
+                    else:
+                        args.append("--%s=%s" % (dashify(k), v))
         return args
 
     def _call_process(self, *args, **kwargs):
