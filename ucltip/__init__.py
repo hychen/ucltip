@@ -144,11 +144,12 @@ class SingleCmd(object):
 
 class CmdDispatcher(SingleCmd):
 
-    def __init__(self, cmd=None, subcmd_prefix=None):
+    def __init__(self, cmd=None, subcmd_prefix=None, opt_style=0):
         if cmd:
             self.cmd = cmd
         if subcmd_prefix:
             self.subcmd_prefix = subcmd_prefix
+        self.opt_style = opt_style
         super(CmdDispatcher, self).__init__(self.cmd)
 
     def __getattr__(self, name):
@@ -156,8 +157,8 @@ class CmdDispatcher(SingleCmd):
             raise AttributeError(name)
         return lambda *args, **kwargs: self._call_process(*args, subcmd=dashify(name), **kwargs)
 
-def cmd(name, subcmd_prefix=None):
+def cmd(name, subcmd_prefix=None, opt_style=0):
     if not subcmd_prefix:
         return SingleCmd(name)
     else:
-        return CmdDispatcher(name, subcmd_prefix)
+        return CmdDispatcher(name, subcmd_prefix, opt_style)
