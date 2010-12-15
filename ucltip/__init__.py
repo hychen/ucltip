@@ -1,65 +1,159 @@
-# most of codes from GitPython project
-import commands
+# the ideas and a lot of codes from GitPython project
+# @author Hsin-Yi Chen (hychen)
 import subprocess
 import sys
-import re
+import os
 
 extra = {}
 if sys.platform == 'win32':
     extra = {'shell': True}
 
+class CommandNotFound(Exception):   pass
+
+class CommandExecutedFalur(Exception):  
+    #{{{def __init__(self, status, errmsg):
+    def __init__(self, status, errmsg):
+        self.status = status
+        self.errmsg = errmsg
+    #}}}
+
+    #{{{def __str__(self):
+    def __str__(self):
+        return self.errmsg
+    #}}}
+pass
+
+#{{{def double_dashify(string):
 def double_dashify(string):
     return '--' + string
+#}}}
 
+#{{{def dashify(string):
 def dashify(string):
     return string.replace('_', '-')
+#}}}
 
-class CommandNotFound(Exception):   pass
-class CommandExecutedFalur(Exception):  pass
+#{{{def make_callargs(*args, **kwargs):
+def make_callargs(cmdname, *args, **kwargs):
+    # Prepare the argument list
+    opt_args = transform_kwargs(**kwargs)
+    ext_args = map(str, args)
+    args = opt_args + ext_args
+    return [cmdname] + args
+#}}}
 
-execute_kwargs = ('istream',
-                  'with_keep_cwd',
-                  'with_raw_output',
-                  'with_exception',
-                  'with_extended_output',
-                  'post_output')
+#{{{def transform_kwargs(**kwargs):
+def transform_kwargs(**kwargs):
+    """
+    Transforms Python style kwargs into command line options.
+
+    @param int opt_style 
+    """
+    try:
+        opt_style = kwargs.pop('opt_style')
+    except KeyError:
+        opt_style = 0
+
+    args = []
+    for k, v in kwargs.items():
+        if len(k) == 1:
+            if v is True:
+                args.append("-%s" % k)
+            elif type(v) is not bool:
+                args.append("-%s" % k)
+                args.append("%s" % v)
+        else:
+            if v is True:
+                args.append("--%s" % dashify(k))
+            elif type(v) is not bool:
+                if opt_style == 1:
+                    args.append("--%s=%s" % (dashify(k), v))
+                else:
+                    args.append("--%s" % dashify(k))
+                    args.append("%s" % v)
+    return args
+#}}}
+
+#{{{def cmdexists(cmdname):
+def cmdexists(cmdname):
+    """check if command exists
+
+    @param str cmdname command name
+    @return bool True if command exists otherwise False
+    """
+    cmdname = str(cmdname)
+    try:
+        p = subprocess.Popen(['whereis', cmdname], stdout=subprocess.PIPE)
+        return True if p.communicate()[0].strip()[len(cmdname)+1:] else False
+    except IndexError:
+        return False
+#}}}
 
 class SingleCmd(object):
 
-    opt_style = 0
-    cmd = None
-    subcmd_prefix = None
-    pre_subcmd = None
+    ## used for debug what command string be executed
+    __DEBUG__ = False
 
-    def __init__(self, cmd=None):
-        if cmd:
-            self.cmd = str(cmd)
+    execute_kwargs = ('stdin','interact', 'via_shell')
 
-        if not self.cmd:
-            self.cmd = self.__class__.__name__.lower()
-
-        if not self.cmd or \
-           not commands.getoutput('whereis %s' % self.cmd)[len(self.cmd)+1:]:
+    #{{{def __init__(self, cmdname, opt_style=0):
+    def __init__(self, cmdname, opt_style=0):
+        self.cmdname = cmdname
+        if not cmdname or not cmdexists(cmdname):
             raise CommandNotFound()
+        self.opt_style = opt_style
+    #}}}
 
-    def __repr__(self):
-        return "command object bound '%s'" % self.cmd
+    #{{{def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
+        return self._callProcess(*args, **kwargs)
+    #}}}
 
-    def execute(self, command,
-                      istream=None,
-                      post_output=None,
-                      with_raw_output=False,
-                      with_exception=True,
-                      with_extended_output=False):
+    #{{{def _callProcess(self, *args, **kwargs):
+    def _callProcess(self, *args, **kwargs):
+        # Handle optional arguments prior to calling transform_kwargs
+        # otherwise these'll end up in args, which is bad.
+        _kwargs = {}
+        for kwarg in self.execute_kwargs:
+            try:
+                _kwargs[kwarg] = kwargs.pop(kwarg)
+            except KeyError:
+                pass
+        # Prepare the argument list
+        call = make_callargs(self.cmdname, *args, **kwargs)
+        if self.__DEBUG__: 
+            print "DBG: execute cmd '%s'" % ' '.join(call)
+        return self.execute(call, **_kwargs)
+    #}}}
 
+    #{{{def execute(self, command, stdin=None, interact=False, via_shell=False):
+    def execute(self, command, stdin=None, interact=False, via_shell=False):
+        """execute command
+
+        @param subprocess.PIPE stdin 
+        @param bool interact retrun Popen instance if interact is True for
+               more control 
+        @param bool via_shell use os.system instead of subprocess.call
+        @return str execited result (interact musc be False)
+
+        @example 
+            # the same as echo `ls -al|grep Dox`
+            ls = ucltip.SingleCmd('ls')
+            grep = ucltip.SingleCmd('grep')
+            print grep('Dox', stdin=ls(a=True, l=True, interact=True).stdout)
+        """
         # Start the process
         proc = subprocess.Popen(command,
-                                stdin=istream,
+                                stdin=stdin,
                                 stderr=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 **extra
                                 )
-        if istream:
+
+        if via_shell:
+            return os.system(' '.join(command))
+
+        if interact:
             return proc
 
         # Wait for the process to return
@@ -71,94 +165,48 @@ class SingleCmd(object):
             proc.stdout.close()
             proc.stderr.close()
 
-        # Strip off trailing whitespace by default
-        if not with_raw_output:
-            stdout_value = stdout_value.strip()
-            stderr_value = stderr_value.strip()
+        if status != 0:
+            raise CommandExecutedFalur(status, stderr_value)
+        return stdout_value
+    #}}}
 
-        if with_exception and status != 0:
-            raise CommandExecutedFalur(stderr_value)
-
-        if post_output:
-            stdout_value = post_output(stdout_value)
-        # Allow access to the command's status code
-        if with_extended_output:
-            return (status, stdout_value, stderr_value)
-        else:
-            return stdout_value
-
-    def transform_kwargs(self, **kwargs):
-        """
-        Transforms Python style kwargs into git command line options.
-        """
-        args = []
-        for k, v in kwargs.items():
-            if len(k) == 1:
-                if v is True:
-                    args.append("-%s" % k)
-                elif type(v) is not bool:
-                    args.append("-%s" % k)
-                    args.append("%s" % v)
-            else:
-                if v is True:
-                    args.append("--%s" % dashify(k))
-                elif type(v) is not bool:
-                    if self.opt_style == 1:
-                        args.append("--%s" % dashify(k))
-                        args.append("%s" % v)
-                    else:
-                        args.append("--%s=%s" % (dashify(k), v))
-        return args
-
-    def _call_process(self, *args, **kwargs):
-        subcmd = kwargs.get('subcmd')
-        if subcmd:
-            del(kwargs['subcmd'])
-
-        # Handle optional arguments prior to calling transform_kwargs
-        # otherwise these'll end up in args, which is bad.
-        _kwargs = {}
-        for kwarg in execute_kwargs:
-            try:
-                _kwargs[kwarg] = kwargs.pop(kwarg)
-            except KeyError:
-                pass
-
-        # Prepare the argument list
-        opt_args = self.transform_kwargs(**kwargs)
-        ext_args = map(str, args)
-        args = opt_args + ext_args
-
-        call = [self.cmd]
-        if subcmd:
-            if self.subcmd_prefix:
-                subcmd = self.subcmd_prefix + subcmd
-            elif self.pre_subcmd:
-                subcmd = self.pre_subcmd(subcmd)
-            call.append(subcmd)
-        call.extend(args)
-        return self.execute(call, **_kwargs)
-
-    def __call__(self, *args, **kwargs):
-        return self._call_process(*args, **kwargs)
+    #{{{def __repr__(self):
+    def __repr__(self):
+        return "%s object bound '%s'" % (self.__class__.__name__, self.cmdname)
+    #}}}
+pass
 
 class CmdDispatcher(SingleCmd):
 
-    def __init__(self, cmd=None, subcmd_prefix=None, opt_style=0):
-        if cmd:
-            self.cmd = cmd
-        if subcmd_prefix:
-            self.subcmd_prefix = subcmd_prefix
-        self.opt_style = opt_style
-        super(CmdDispatcher, self).__init__(self.cmd)
+    ## prefix of sub command
+    subcmd_prefix = None
 
+    #{{{def __init__(self, cmdname, opt_style=0, subcmd_prefix=None):
+    def __init__(self, cmdname, opt_style=0, subcmd_prefix=None):
+        """Constructor
+
+        @param str cmdname command name
+        @param str opt_style option style
+        @param str subcmd_prefix prefix of sub command
+        """
+        self.subcmd_prefix = subcmd_prefix
+        super(CmdDispatcher, self).__init__(cmdname, opt_style)
+    #}}}
+
+    #{{{def __getattr__(self, name):
     def __getattr__(self, name):
         if name[:1] == '_':
             raise AttributeError(name)
-        return lambda *args, **kwargs: self._call_process(*args, subcmd=dashify(name), **kwargs)
+        self.subcmd = dashify(name)
+        return lambda *args, **kwargs: self._callProcess(*args, **kwargs)
+    #}}}
 
-def cmd(name, subcmd_prefix=None, opt_style=0):
-    if not subcmd_prefix:
-        return SingleCmd(name)
-    else:
-        return CmdDispatcher(name, subcmd_prefix, opt_style)
+    #{{{def _callProcess(self, *args, **kwargs):
+    def _callProcess(self, *args, **kwargs):
+        if self.subcmd_prefix:
+            self.subcmd = self.subcmd_prefix + self.subcmd
+        args = list(args)
+        args.insert(0, self.subcmd)
+        return super(CmdDispatcher, self)._callProcess(*args, **kwargs)
+    #}}}
+pass

@@ -47,21 +47,12 @@ class ConsoleTestCase(unittest.TestCase):
     #{{{def test_singlecmd(self):
     def test_singlecmd(self):
         expr = SingleCmd('expr')
-        self.assertEquals(expr('3', '+', '4'), '7')
-        self.assertEquals(expr('3', '+', '4', with_raw_output=True), '7\n')
-        self.assertEquals(expr('3', '+', '4', post_output=int), 7)
-        try:
-            git = SingleCmd('git')
-            self.assertEquals(git('log',subcmd='help', with_extended_output=True)[0],0)
-        except CommandNotFound, e:
-            print "Skip: git does not be installed."
-    #}}}
-
-    #{{{def test_cmddispather(self):
-    def test_cmddispather(self):
-        git = CmdDispatcher('git')
-        git.pre_subcmd = dashify
-        self.assertRaises(CommandExecutedFalur,git.log)
+        self.assertEquals(expr('3', '+', '4'), '7\n')
+        # test pipe
+        ls = SingleCmd('ls')
+        grep = SingleCmd('grep')
+        self.assertEquals('setup.py\n', 
+                grep('setup.py', stdin=ls(a=True, interact=True).stdout))
     #}}}
 pass
 
