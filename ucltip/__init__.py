@@ -11,8 +11,8 @@ if sys.platform == 'win32':
 class CommandNotFound(Exception):   pass
 
 class CommandExecutedFalur(Exception):  
-    #{{{def __init__(self, status, errmsg):
-    def __init__(self, status, errmsg):
+    #{{{def __init__(self, status, errmsg=None):
+    def __init__(self, status, errmsg=None):
         self.status = status
         self.errmsg = errmsg
     #}}}
@@ -142,32 +142,37 @@ class SingleCmd(object):
             grep = ucltip.SingleCmd('grep')
             print grep('Dox', stdin=ls(a=True, l=True, interact=True).stdout)
         """
-        # Start the process
-        proc = subprocess.Popen(command,
-                                stdin=stdin,
-                                stderr=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                **extra
-                                )
-
+        assert not (interact and via_shell),\
+            "You can not get a Popen instance when you want to execute command in shell."
+        assert not (stdin and via_shell),\
+            "you can not use stdin and via_shell in the same time." 
         if via_shell:
-            return os.system(' '.join(command))
-
-        if interact:
-            return proc
-
-        # Wait for the process to return
-        try:
-            stdout_value = proc.stdout.read()
-            stderr_value = proc.stderr.read()
-            status = proc.wait()
-        finally:
-            proc.stdout.close()
-            proc.stderr.close()
-
-        if status != 0:
-            raise CommandExecutedFalur(status, stderr_value)
-        return stdout_value
+            status = os.system(' '.join(command))
+            if status != 0:
+                raise CommandExecutedFalur(status)
+        else:
+            # Start the process
+            proc = subprocess.Popen(command,
+                                    stdin=stdin,
+                                    stderr=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    **extra
+                                    )
+            if interact:
+                return proc
+    
+            # Wait for the process to return
+            try:
+                stdout_value = proc.stdout.read()
+                stderr_value = proc.stderr.read()
+                status = proc.wait()
+            finally:
+                proc.stdout.close()
+                proc.stderr.close()
+    
+            if status != 0:
+                raise CommandExecutedFalur(status, stderr_value)
+            return stdout_value
     #}}}
 
     #{{{def __repr__(self):
