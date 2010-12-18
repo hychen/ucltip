@@ -178,7 +178,7 @@ class SingleCmd(object):
         assert not (interact and via_shell),\
             "You can not get a Popen instance when you want to execute command in shell."
         assert not (stdin and via_shell),\
-            "you can not use stdin and via_shell in the same time." 
+            "You can not use stdin and via_shell in the same time." 
         if via_shell:
             status = os.system(' '.join(command))
             if status != 0:
