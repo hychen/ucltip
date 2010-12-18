@@ -51,6 +51,13 @@ Basic Usage
 	#'hi\n'
 	print ls("hi")
 
+	# some options is mutiple, which means the name is name, but you can give 
+	# many different values, for example 
+	# `foo -a -b -o Dir=/var -o Dir::Cache=/tmp`
+	# so you need to use make_optargs to create args if the opt name is duplicate
+	optargs = ucltip.make_optargs('o', ('Dir=/var','Dir::Cache=/tmp'))
+	SingleCmd('foo')(optargs, a=True, b=True)
+
 The command be executed by subprocess.call, it bypass the shell.
 
 ::

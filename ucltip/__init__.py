@@ -42,6 +42,21 @@ def make_callargs(cmdname, *args, **kwargs):
     return [cmdname] + args
 #}}}
 
+#{{{def make_optargs(optname, values, opt_style=0):
+def make_optargs(optname, values, opt_style=0):
+    """create command line options, same key but different values 
+
+    @param str optname
+    @param list values
+    @param int option style
+    @return list combined option args
+    """
+    ret = []
+    for v in values:
+        ret = _append_opt(ret, optname, v, opt_style)
+    return ret
+#}}}
+
 #{{{def transform_kwargs(**kwargs):
 def transform_kwargs(**kwargs):
     """
@@ -56,21 +71,34 @@ def transform_kwargs(**kwargs):
 
     args = []
     for k, v in kwargs.items():
-        if len(k) == 1:
-            if v is True:
-                args.append("-%s" % k)
-            elif type(v) is not bool:
-                args.append("-%s" % k)
-                args.append("%s" % v)
-        else:
-            if v is True:
+        args = _append_opt(args, k, v, opt_style)
+    return args
+#}}}
+
+#{{{def _append_opt(k, v, opt_style):
+def _append_opt(args, k, v, opt_style):
+    """append option value transformed from kwargs to inputed args list
+
+    @param str k option name
+    @param str v option value
+    @param int option style
+    @return list combined args list
+    """
+    if len(k) == 1:
+        if v is True:
+            args.append("-%s" % k)
+        elif type(v) is not bool:
+            args.append("-%s" % k)
+            args.append("%s" % v)
+    else:
+        if v is True:
+            args.append("--%s" % dashify(k))
+        elif type(v) is not bool:
+            if opt_style == 1:
+                args.append("--%s=%s" % (dashify(k), v))
+            else:
                 args.append("--%s" % dashify(k))
-            elif type(v) is not bool:
-                if opt_style == 1:
-                    args.append("--%s=%s" % (dashify(k), v))
-                else:
-                    args.append("--%s" % dashify(k))
-                    args.append("%s" % v)
+                args.append("%s" % v)
     return args
 #}}}
 

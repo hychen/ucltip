@@ -22,7 +22,7 @@ import unittest
 import shutil
 import tempfile
 
-from ucltip import SingleCmd, CommandNotFound, CmdDispatcher, CommandExecutedFalur, dashify
+import ucltip
 
 class ConsoleTestCase(unittest.TestCase):
 
@@ -36,21 +36,27 @@ class ConsoleTestCase(unittest.TestCase):
         pass
     #}}}
 
+    #{{{def test_opttransform(self):
+    def test_opttransform(self):
+        self.assertEquals(['--all','h','--all','i'],ucltip.make_optargs('all', ('h','i')))
+        self.assertEquals(['--all=h','--all=i'],ucltip.make_optargs('all', ('h','i'), 1))
+    #}}}
+
     #{{{def test_command_not_found(self):
     def test_command_not_found(self):
-        self.assertRaises(CommandNotFound, SingleCmd, None)
-        self.assertRaises(CommandNotFound, SingleCmd, '')
-        self.assertRaises(CommandNotFound, SingleCmd, 1234.5)
-        self.assertRaises(CommandNotFound, SingleCmd, '000')
+        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, None)
+        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '')
+        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, 1234.5)
+        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '000')
     #}}}
 
     #{{{def test_singlecmd(self):
     def test_singlecmd(self):
-        expr = SingleCmd('expr')
+        expr = ucltip.SingleCmd('expr')
         self.assertEquals(expr('3', '+', '4'), '7\n')
         # test pipe
-        ls = SingleCmd('ls')
-        grep = SingleCmd('grep')
+        ls = ucltip.SingleCmd('ls')
+        grep = ucltip.SingleCmd('grep')
         self.assertEquals('setup.py\n', 
                 grep('setup.py', stdin=ls(a=True, interact=True).stdout))
     #}}}
