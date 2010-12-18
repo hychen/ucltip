@@ -81,12 +81,17 @@ def cmdexists(cmdname):
     @param str cmdname command name
     @return bool True if command exists otherwise False
     """
-    cmdname = str(cmdname)
-    try:
-        p = subprocess.Popen(['whereis', cmdname], stdout=subprocess.PIPE)
-        return True if p.communicate()[0].strip()[len(cmdname)+1:] else False
-    except IndexError:
+    """Is command on the executable search path?"""
+    if 'PATH' not in os.environ:
         return False
+    path = os.environ['PATH']
+    for element in path.split(os.pathsep):
+        if not element:
+            continue
+        filename = os.path.join(element, str(cmdname))
+        if os.path.isfile(filename) and os.access(filename, os.X_OK):
+            return True
+    return False
 #}}}
 
 class SingleCmd(object):
