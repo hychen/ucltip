@@ -248,3 +248,12 @@ class CmdDispatcher(SingleCmd):
         return super(CmdDispatcher, self)._callProcess(*args, **kwargs)
     #}}}
 pass
+
+#{{{def use_helper():
+def use_helper():
+    """allow to use a shortcut functions for creating Cmd
+    """
+    import __builtin__
+    __builtin__.__dict__['_c'] = SingleCmd
+    __builtin__.__dict__['_d'] = CmdDispatcher
+#}}}
