@@ -127,7 +127,7 @@ class SingleCmd(object):
     ## used for debug what command string be executed
     __DEBUG__ = False
     cmdname = None
-    execute_kwargs = ('stdin','interact', 'via_shell')
+    execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
     #{{{def __init__(self, cmdname=None, opt_style=0):
     def __init__(self, cmdname=None, opt_style=0):
@@ -159,8 +159,8 @@ class SingleCmd(object):
         return self.execute(call, **_kwargs)
     #}}}
 
-    #{{{def execute(self, command, stdin=None, interact=False, via_shell=False):
-    def execute(self, command, stdin=None, interact=False, via_shell=False):
+    #{{{def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
+    def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
         """execute command
 
         @param subprocess.PIPE stdin 
@@ -203,9 +203,12 @@ class SingleCmd(object):
                 proc.stdout.close()
                 proc.stderr.close()
     
-            if status != 0:
-                raise CommandExecutedFalur(status, stderr_value)
-            return stdout_value
+            if not with_extend_output:
+                if status != 0:
+                    raise CommandExecutedFalur(status, stderr_value)
+                return stdout_value
+            else:
+                return (status, stdout_value)
     #}}}
 
     #{{{def __repr__(self):
