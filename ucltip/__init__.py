@@ -126,13 +126,13 @@ class SingleCmd(object):
 
     ## used for debug what command string be executed
     __DEBUG__ = False
-
+    cmdname = None
     execute_kwargs = ('stdin','interact', 'via_shell')
 
-    #{{{def __init__(self, cmdname, opt_style=0):
-    def __init__(self, cmdname, opt_style=0):
-        self.cmdname = cmdname
-        if not cmdname or not cmdexists(cmdname):
+    #{{{def __init__(self, cmdname=None, opt_style=0):
+    def __init__(self, cmdname=None, opt_style=0):
+        self.cmdname = cmdname or self.cmdname
+        if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
         self.opt_style = opt_style
     #}}}
@@ -219,15 +219,15 @@ class CmdDispatcher(SingleCmd):
     ## prefix of sub command
     subcmd_prefix = None
 
-    #{{{def __init__(self, cmdname, opt_style=0, subcmd_prefix=None):
-    def __init__(self, cmdname, opt_style=0, subcmd_prefix=None):
+    #{{{def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
+    def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
         """Constructor
 
         @param str cmdname command name
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
-        self.subcmd_prefix = subcmd_prefix
+        self.subcmd_prefix = self.subcmd_prefix or subcmd_prefix
         super(CmdDispatcher, self).__init__(cmdname, opt_style)
     #}}}
 
