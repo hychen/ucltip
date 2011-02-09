@@ -8,7 +8,7 @@ setup(
     name = 'ucltip',
     version = open('VERSION.txt').read().strip(),
     description = 'A library to help making command line tool Python binding faster',
-    long_description=open('README.rst').read(),
+    long_description=open('README.txt').read(),
     author = 'Hsin-Yi Chen 陳信屹 (hychen)',
     author_email = 'ossug.hychen@gmail.com',
     url='http://github.com/hychen/ucltip',

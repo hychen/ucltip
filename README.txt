@@ -1,9 +1,10 @@
+# vim:syn=rst:
 ========================================
 UCLTIP - Use command line tool in Python
 ========================================
 
 This library makes you use command line tool in Python more easier.
-The original idea and most of basic codes are from GitPython project 
+The original idea and most of basic codes are from GitPython project
 `http://pypi.python.org/pypi/GitPython/`
 
 Basic Usage
@@ -15,7 +16,7 @@ Basic Usage
 	uname = SingleCmd('uname')
 	# result is Linux
 	print uname()
-	
+
 	# with args
 	expr  = SingleCmd('expr')
 	# result is 10
@@ -33,7 +34,7 @@ Basic Usage
 	# variable has '-' should replaced by '_', otherwise syntax error happens
 	print ls(all=True, almost_all=True)
 
-	# with key-value optons, has 2 different style, 
+	# with key-value optons, has 2 different style,
 	# `--key value` or `--key=value`, you can use opt_style variable to control them
 	wget = SingleCmd('wget')
 
@@ -46,13 +47,13 @@ Basic Usage
 
 	# you can also overwrite the bound command
 	ls.cmdname = 'echo'
-	# the result is 
+	# the result is
 	# DBG: execute cmd 'echo hi'
 	#'hi\n'
 	print ls("hi")
 
-	# some options is mutiple, which means the name is name, but you can give 
-	# many different values, for example 
+	# some options is mutiple, which means the name is name, but you can give
+	# many different values, for example
 	# `foo -a -b -o Dir=/var -o Dir::Cache=/tmp`
 	# so you need to use make_optargs to create args if the opt name is duplicate
 	optargs = ucltip.make_optargs('o', ('Dir=/var','Dir::Cache=/tmp'))
@@ -89,8 +90,8 @@ Handling Error of command execution
 -----------------------------------
 if the command you want to use is not exists, the exception ucltip.CommandNotFound raises
 
-:: 
-	
+::
+
 	>> a=ucltip.SingleCmd('oo')
 	Traceback (most recent call last):
 	  File "<stdin>", line 1, in <module>
@@ -116,7 +117,7 @@ if the command be executed falied, the exception ucltip.CommandExecutedFalur rai
 	    raise CommandExecutedFalur(status, stderr_value)
 	ucltip.CommandExecutedFalur: ls: unrecognized option '--ccc'
 	Try `ls --help' for more information.
-	
+
 here is a example to hanlde error:
 
 ::
@@ -143,7 +144,7 @@ and some commands like `zenity`, they have prefix string in their sub command.
 	# you can get Popen instance also
 	proc = git.log(interact=True)
 
-	# zenity has '--' prefix in its sub command, so you need to specify prefix string 
+	# zenity has '--' prefix in its sub command, so you need to specify prefix string
 	# and option style
 	zenity = CmdDispatcher('zneity', opt_style=1, subcmd_prefix='--')
 
