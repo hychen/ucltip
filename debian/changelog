@@ -1,0 +1,5 @@
+python-ucltip (0.4.3-1) unstable; urgency=low
+
+  * Initial release (Closes: #612566)
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Wed, 09 Feb 2011 11:26:24 +0800
