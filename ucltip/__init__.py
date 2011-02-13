@@ -10,7 +10,7 @@ if sys.platform == 'win32':
 
 class CommandNotFound(Exception):   pass
 
-class CommandExecutedFalur(Exception):  
+class CommandExecutedFalur(Exception):
     #{{{def __init__(self, status, errmsg=None):
     def __init__(self, status, errmsg=None):
         self.status = status
@@ -38,13 +38,13 @@ def make_callargs(cmdname, *args, **kwargs):
     # Prepare the argument list
     opt_args = transform_kwargs(**kwargs)
     ext_args = map(str, args)
-    args = opt_args + ext_args
+    args = ext_args + opt_args
     return [cmdname] + args
 #}}}
 
 #{{{def make_optargs(optname, values, opt_style=0):
 def make_optargs(optname, values, opt_style=0):
-    """create command line options, same key but different values 
+    """create command line options, same key but different values
 
     @param str optname
     @param list values
@@ -62,7 +62,7 @@ def transform_kwargs(**kwargs):
     """
     Transforms Python style kwargs into command line options.
 
-    @param int opt_style 
+    @param int opt_style
     """
     try:
         opt_style = kwargs.pop('opt_style')
@@ -154,7 +154,7 @@ class SingleCmd(object):
                 pass
         # Prepare the argument list
         call = make_callargs(self.cmdname, *args, **kwargs)
-        if self.__DEBUG__: 
+        if self.__DEBUG__:
             print "DBG: execute cmd '%s'" % ' '.join(call)
         return self.execute(call, **_kwargs)
     #}}}
@@ -163,13 +163,13 @@ class SingleCmd(object):
     def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
         """execute command
 
-        @param subprocess.PIPE stdin 
+        @param subprocess.PIPE stdin
         @param bool interact retrun Popen instance if interact is True for
-               more control 
+               more control
         @param bool via_shell use os.system instead of subprocess.call
         @return str execited result (interact musc be False)
 
-        @example 
+        @example
             # the same as echo `ls -al|grep Dox`
             ls = ucltip.SingleCmd('ls')
             grep = ucltip.SingleCmd('grep')
@@ -178,7 +178,7 @@ class SingleCmd(object):
         assert not (interact and via_shell),\
             "You can not get a Popen instance when you want to execute command in shell."
         assert not (stdin and via_shell),\
-            "You can not use stdin and via_shell in the same time." 
+            "You can not use stdin and via_shell in the same time."
         if via_shell:
             status = os.system(' '.join(command))
             if status != 0:
@@ -193,7 +193,7 @@ class SingleCmd(object):
                                     )
             if interact:
                 return proc
-    
+
             # Wait for the process to return
             try:
                 stdout_value = proc.stdout.read()
@@ -202,7 +202,7 @@ class SingleCmd(object):
             finally:
                 proc.stdout.close()
                 proc.stderr.close()
-    
+
             if not with_extend_output:
                 if status != 0:
                     raise CommandExecutedFalur(status, stderr_value)
