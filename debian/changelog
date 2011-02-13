@@ -1,3 +1,10 @@
+python-ucltip (0.4.4-1) unstable; urgency=low
+
+  * 0.4.4-1 release
+    - fix sub commad of CmdDispatcher does not work
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Mon, 14 Feb 2011 01:47:44 +0800
+
 python-ucltip (0.4.3-1) unstable; urgency=low
 
   * Initial release (Closes: #612566)
