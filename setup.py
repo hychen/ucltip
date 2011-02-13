@@ -8,7 +8,12 @@ setup(
     name = 'ucltip',
     version = open('VERSION.txt').read().strip(),
     description = 'A library to help making command line tool Python binding faster',
-    long_description=open('README.txt').read(),
+    long_description="""
+This library makes you to use command line tool in Python by OO way.
+The concept is to transform 1) command as a instance, 2) options
+of command as arguments and keyword arguments of function or
+instance method when method be used as a sub command of a command.
+""",
     author = 'Hsin-Yi Chen 陳信屹 (hychen)',
     author_email = 'ossug.hychen@gmail.com',
     url='http://github.com/hychen/ucltip',
