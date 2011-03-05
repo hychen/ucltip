@@ -1,3 +1,9 @@
+python-ucltip (0.4.4-201103060132-1) unstable; urgency=low
+
+  * snashop of 201103060132
+
+ -- Hsin-Yi Chen (hychen) <hychen@canonical.com>  Sun, 06 Mar 2011 01:35:47 +0800
+
 python-ucltip (0.4.4-1) unstable; urgency=low
 
   * 0.4.4-1 release
