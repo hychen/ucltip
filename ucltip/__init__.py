@@ -33,15 +33,6 @@ def dashify(string):
     return string.replace('_', '-')
 #}}}
 
-#{{{def make_callargs(*args, **kwargs):
-def make_callargs(cmdname, *args, **kwargs):
-    # Prepare the argument list
-    opt_args = transform_kwargs(**kwargs)
-    ext_args = map(str, args)
-    args = ext_args + opt_args
-    return [cmdname] + args
-#}}}
-
 #{{{def make_optargs(optname, values, opt_style=0):
 def make_optargs(optname, values, opt_style=0):
     """create command line options, same key but different values
@@ -57,18 +48,13 @@ def make_optargs(optname, values, opt_style=0):
     return ret
 #}}}
 
-#{{{def transform_kwargs(**kwargs):
-def transform_kwargs(**kwargs):
+#{{{def transform_kwargs(opt_style, **kwargs):
+def transform_kwargs(opt_style, **kwargs):
     """
     Transforms Python style kwargs into command line options.
 
     @param int opt_style
     """
-    try:
-        opt_style = kwargs.pop('opt_style')
-    except KeyError:
-        opt_style = 0
-
     args = []
     for k, v in kwargs.items():
         args = _append_opt(args, k, v, opt_style)
@@ -124,14 +110,14 @@ def cmdexists(cmdname):
 
 class SingleCmd(object):
 
-    ## used for debug what command string be executed
-    __DEBUG__ = False
-    cmdname = None
     execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
     #{{{def __init__(self, cmdname=None, opt_style=0):
     def __init__(self, cmdname=None, opt_style=0):
-        self.cmdname = cmdname or self.cmdname
+        ## used for debug what command string be executed
+        self.__DEBUG__ = False
+        self.dry_run = False
+        self.cmdname = cmdname or self.__class__.__name__.lower()
         if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
         self.opt_style = opt_style
@@ -153,10 +139,10 @@ class SingleCmd(object):
             except KeyError:
                 pass
         # Prepare the argument list
-        call = make_callargs(self.cmdname, *args, **kwargs)
-        if self.__DEBUG__:
+        call = self.make_callargs(*args, **kwargs)
+        if self.__DEBUG__ or self.dry_run:
             print "DBG: execute cmd '%s'" % ' '.join(call)
-        return self.execute(call, **_kwargs)
+        return call if self.dry_run else self.execute(call, **_kwargs)
     #}}}
 
     #{{{def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
@@ -211,6 +197,15 @@ class SingleCmd(object):
                 return (status, stdout_value)
     #}}}
 
+    #{{{def make_callargs(*args, **kwargs):
+    def make_callargs(self, *args, **kwargs):
+        # Prepare the argument list
+        opt_args = transform_kwargs(self.opt_style, **kwargs)
+        ext_args = map(str, args)
+        args = ext_args + opt_args
+        return [self.cmdname] + args
+    #}}}
+
     #{{{def __repr__(self):
     def __repr__(self):
         return "%s object bound '%s'" % (self.__class__.__name__, self.cmdname)
@@ -218,9 +213,6 @@ class SingleCmd(object):
 pass
 
 class CmdDispatcher(SingleCmd):
-
-    ## prefix of sub command
-    subcmd_prefix = None
 
     #{{{def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
     def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
@@ -230,8 +222,8 @@ class CmdDispatcher(SingleCmd):
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
-        self.subcmd_prefix = self.subcmd_prefix or subcmd_prefix
-        super(CmdDispatcher, self).__init__(cmdname, opt_style)
+        self.subcmd_prefix = subcmd_prefix
+        SingleCmd.__init__(self, cmdname, opt_style)
     #}}}
 
     #{{{def __getattr__(self, name):
@@ -259,4 +251,13 @@ def use_helper():
     import __builtin__
     __builtin__.__dict__['_c'] = SingleCmd
     __builtin__.__dict__['_d'] = CmdDispatcher
+#}}}
+
+#{{{def reg_singlecmds():
+def reg_singlecmds(*args):
+    """register bound object in current env
+    """
+    import __builtin__
+    for cmdname in args:
+        __builtin__.__dict__[cmdname] = SingleCmd(cmdname)
 #}}}

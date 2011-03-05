@@ -57,8 +57,25 @@ class ConsoleTestCase(unittest.TestCase):
         # test pipe
         ls = ucltip.SingleCmd('ls')
         grep = ucltip.SingleCmd('grep')
-        self.assertEquals('setup.py\n', 
+        self.assertEquals('setup.py\n',
                 grep('setup.py', stdin=ls(a=True, interact=True).stdout))
+    #}}}
+
+    #{{{def test_cmddispatcher(self):
+    def test_cmddispatcher(self):
+        zenity = ucltip.CmdDispatcher('zenity')
+        zenity.dry_run=True
+        self.assertEquals(zenity.info(text=1), ['zenity','info', '--text', '1'])
+        zenity.subcmd_prefix='--'
+        self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text', '1'])
+        zenity.opt_style=1
+        self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text=1'])
+    #}}}
+
+    #{{{def test_regsinglecmds(self):
+    def test_regsinglecmds(self):
+        ucltip.reg_singlecmds('expr', 'dpkg', 'grep')
+        self.assertEquals(type(expr), type(dpkg))
     #}}}
 pass
 
