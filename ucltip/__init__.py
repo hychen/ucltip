@@ -124,14 +124,14 @@ def cmdexists(cmdname):
 
 class SingleCmd(object):
 
-    ## used for debug what command string be executed
-    __DEBUG__ = False
-    cmdname = None
     execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
     #{{{def __init__(self, cmdname=None, opt_style=0):
     def __init__(self, cmdname=None, opt_style=0):
-        self.cmdname = cmdname or self.cmdname
+        ## used for debug what command string be executed
+        self.__DEBUG__ = False
+        self.dry_run = False
+        self.cmdname = cmdname
         if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
         self.opt_style = opt_style
@@ -154,9 +154,9 @@ class SingleCmd(object):
                 pass
         # Prepare the argument list
         call = make_callargs(self.cmdname, *args, **kwargs)
-        if self.__DEBUG__:
+        if self.__DEBUG__ or self.dry_run:
             print "DBG: execute cmd '%s'" % ' '.join(call)
-        return self.execute(call, **_kwargs)
+        return 0 if self.dry_run else self.execute(call, **_kwargs)
     #}}}
 
     #{{{def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
