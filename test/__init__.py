@@ -71,6 +71,12 @@ class ConsoleTestCase(unittest.TestCase):
         zenity.opt_style=1
         self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text=1'])
     #}}}
+
+    #{{{def test_regsinglecmds(self):
+    def test_regsinglecmds(self):
+        ucltip.reg_singlecmds('expr', 'dpkg', 'grep')
+        self.assertEquals(type(expr), type(dpkg))
+    #}}}
 pass
 
 def suite():

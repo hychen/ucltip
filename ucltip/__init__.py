@@ -117,7 +117,7 @@ class SingleCmd(object):
         ## used for debug what command string be executed
         self.__DEBUG__ = False
         self.dry_run = False
-        self.cmdname = cmdname
+        self.cmdname = cmdname or self.__class__.__name__.lower()
         if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
         self.opt_style = opt_style
@@ -251,4 +251,13 @@ def use_helper():
     import __builtin__
     __builtin__.__dict__['_c'] = SingleCmd
     __builtin__.__dict__['_d'] = CmdDispatcher
+#}}}
+
+#{{{def reg_singlecmds():
+def reg_singlecmds(*args):
+    """register bound object in current env
+    """
+    import __builtin__
+    for cmdname in args:
+        __builtin__.__dict__[cmdname] = SingleCmd(cmdname)
 #}}}
