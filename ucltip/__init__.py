@@ -110,17 +110,19 @@ def cmdexists(cmdname):
 
 class SingleCmd(object):
 
+    opt_style = 0
     execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
-    #{{{def __init__(self, cmdname=None, opt_style=0):
-    def __init__(self, cmdname=None, opt_style=0):
+    #{{{def __init__(self, cmdname=None, opt_style=None):
+    def __init__(self, cmdname=None, opt_style=None):
         ## used for debug what command string be executed
         self.__DEBUG__ = False
         self.dry_run = False
         self.cmdname = cmdname or self.__class__.__name__.lower()
         if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
-        self.opt_style = opt_style
+        if opt_style:
+            self.opt_style = opt_style
     #}}}
 
     #{{{def __call__(self, *args, **kwargs):
@@ -214,6 +216,8 @@ pass
 
 class CmdDispatcher(SingleCmd):
 
+    subcmd_prefix = None
+
     #{{{def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
     def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
         """Constructor
@@ -222,7 +226,8 @@ class CmdDispatcher(SingleCmd):
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
-        self.subcmd_prefix = subcmd_prefix
+        if subcmd_prefix:
+            self.subcmd_prefix = subcmd_prefix
         SingleCmd.__init__(self, cmdname, opt_style)
     #}}}
 
