@@ -118,6 +118,7 @@ class SingleCmd(object):
         ## used for debug what command string be executed
         self.__DEBUG__ = False
         self.dry_run = False
+        self.default_opts = {}
         self.cmdname = cmdname or self.__class__.__name__.lower()
         if not self.cmdname or not cmdexists(self.cmdname):
             raise CommandNotFound()
@@ -134,6 +135,8 @@ class SingleCmd(object):
     def _callProcess(self, *args, **kwargs):
         # Handle optional arguments prior to calling transform_kwargs
         # otherwise these'll end up in args, which is bad.
+        self.default_opts.update(kwargs)
+        kwargs = self.default_opts
         _kwargs = {}
         for kwarg in self.execute_kwargs:
             try:
@@ -206,6 +209,30 @@ class SingleCmd(object):
         ext_args = map(str, args)
         args = ext_args + opt_args
         return [self.cmdname] + args
+    #}}}
+
+    #{{{def opts(self, **kwargs):
+    def opts(self, **kwargs):
+        """set default options of command
+
+        @param dict kwargs options dict
+        @return dict default options if no kwargs input
+        @example
+
+            obj.opts(t=3)
+            # the result is {'t':3}
+            obj.opts()
+        """
+        if kwargs:
+            self.default_opts.update(kwargs)
+        else:
+            return self.default_opts
+    #}}}
+
+    #{{{def reset(self):
+    def reset(self):
+        """reset default options"""
+        self.default_opts = {}
     #}}}
 
     #{{{def __repr__(self):

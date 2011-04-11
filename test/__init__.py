@@ -78,14 +78,17 @@ class ConsoleTestCase(unittest.TestCase):
         self.assertEquals(type(expr), type(dpkg))
     #}}}
 
-    #{{{def test_extcls(self):
-    def test_extcls(self):
-        class ExtCmd(ucltip.SingleCmd):
-            opt_style = 1
-        self.assertEquals(ExtCmd('ls').opt_style, 1)
-        class ExtCmd2(ucltip.CmdDispatcher):
-            subcmd_prefix = '--'
-        self.assertEquals(ExtCmd2('zenity').subcmd_prefix, '--')
+    #{{{def test_defaultopts(self):
+    def test_setdefaultopts(self):
+        ls = ucltip.SingleCmd('ls')
+        ls.dry_run = True
+        ls.opts(a=True, via_shell=True)
+        self.assertEquals(ls.opts(), {'a':True, 'via_shell':True})
+        self.assertEquals(ls('/tmp'), ['ls', '/tmp', '-a'])
+        self.assertEquals(ls('/tmp', a=False), ['ls', '/tmp'])
+        # reset options
+        ls.reset()
+        self.assertEquals(ls('/tmp'), ['ls', '/tmp'])
     #}}}
 pass
 
