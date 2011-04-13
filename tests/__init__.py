@@ -17,40 +17,30 @@
 # this software; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA 02111-1307 USA
 
-import os
 import unittest
-import shutil
-import tempfile
-
 import ucltip
 
 class ConsoleTestCase(unittest.TestCase):
 
-    #{{{def setUp(self):
     def setUp(self):
         pass
-    #}}}
 
-    #{{{def tearDown(self):
     def tearDown(self):
         pass
-    #}}}
 
-    #{{{def test_opttransform(self):
     def test_opttransform(self):
+        self.assertEquals(ucltip.optname('k'), '-k')
+        self.assertEquals(ucltip.optname('key'), '--key')
+        self.assertEquals(ucltip.optname('key_one'), '--key-one')
         self.assertEquals(['--all','h','--all','i'],ucltip.make_optargs('all', ('h','i')))
         self.assertEquals(['--all=h','--all=i'],ucltip.make_optargs('all', ('h','i'), 1))
-    #}}}
 
-    #{{{def test_command_not_found(self):
     def test_command_not_found(self):
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, None)
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '')
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, 1234.5)
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '000')
-    #}}}
 
-    #{{{def test_singlecmd(self):
     def test_singlecmd(self):
         expr = ucltip.SingleCmd('expr')
         self.assertEquals(expr('3', '+', '4'), '7\n')
@@ -59,9 +49,7 @@ class ConsoleTestCase(unittest.TestCase):
         grep = ucltip.SingleCmd('grep')
         self.assertEquals('setup.py\n',
                 grep('setup.py', stdin=ls(a=True, interact=True).stdout))
-    #}}}
 
-    #{{{def test_cmddispatcher(self):
     def test_cmddispatcher(self):
         zenity = ucltip.CmdDispatcher('zenity')
         zenity.dry_run=True
@@ -70,15 +58,11 @@ class ConsoleTestCase(unittest.TestCase):
         self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text', '1'])
         zenity.opt_style=1
         self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text=1'])
-    #}}}
 
-    #{{{def test_regsinglecmds(self):
     def test_regsinglecmds(self):
         ucltip.reg_singlecmds('expr', 'dpkg', 'grep')
         self.assertEquals(type(expr), type(dpkg))
-    #}}}
 
-    #{{{def test_defaultopts(self):
     def test_setdefaultopts(self):
         ls = ucltip.SingleCmd('ls')
         ls.dry_run = True
@@ -89,8 +73,6 @@ class ConsoleTestCase(unittest.TestCase):
         # reset options
         ls.reset()
         self.assertEquals(ls('/tmp'), ['ls', '/tmp'])
-    #}}}
-pass
 
 def suite():
     return unittest.makeSuite(ConsoleTestCase, 'test')
