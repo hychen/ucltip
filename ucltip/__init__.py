@@ -88,7 +88,7 @@ def cmdexists(cmdname):
     executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
     filenames = [ os.path.join(element, str(cmdname)) \
                   for element in os.environ['PATH'].split(os.pathsep) if element ]
-    return filter(executable, filenames)
+    return len(filter(executable, filenames)) >= 1
 
 class CommandNotFound(Exception):
     pass
