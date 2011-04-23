@@ -1,15 +1,31 @@
 # the ideas and a lot of codes from GitPython project
 # @author Hsin-Yi Chen (hychen)
-import subprocess
-import sys
-import os
+
+"""Command-line adapt library
+
+This module is a command-line adapter library that:
+
+    - transform arguments and options of command-line tool to
+      Python arguments and keyword arguments.
+    - provide a way to execute command-line tools in Python by OO way.
+
+Here is a simple usage example that launching a Zenity info dialog in Python
+
+    zenity = ucltip.CmdDispatcher('zenity', 1, '--')
+    zenity.info(text="The first example", width=500)
+"""
 
 __all__ = ['reg_singlecmds',
+           'transform_kwargs',
            'cmdexists',
            'SingleCmd',
            'CmdDispatcher',
            'CommandNotFound',
            'CommandExecutedFalur']
+
+import subprocess
+import sys
+import os
 
 extra = {}
 if sys.platform == 'win32':
@@ -21,6 +37,10 @@ def reg_singlecmds(*args):
     import __builtin__
     for cmdname in args:
         __builtin__.__dict__[undashify(cmdname)] = SingleCmd(cmdname)
+
+# =============================
+# Utility functions and classes
+# =============================
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -36,6 +56,22 @@ def undashify(string):
     """covert - to _ of string
     """
     return string.replace('-', '_')
+
+def cmdexists(cmdname):
+    """check if command exists
+
+    @param str cmdname command name
+    @return bool True if command exists otherwise False
+    """
+    assert 'PATH' in os.environ
+    executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
+    filenames = [ os.path.join(element, str(cmdname)) \
+                  for element in os.environ['PATH'].split(os.pathsep) if element ]
+    return len(filter(executable, filenames)) >= 1
+
+# =====================
+# Options and Arguments
+# =====================
 
 def transform_kwargs(opt_style, **kwargs):
     """
@@ -83,17 +119,9 @@ def make_optargs(optname, values, opt_style=0):
         __append_opt(ret, optname, v, opt_style)
     return ret
 
-def cmdexists(cmdname):
-    """check if command exists
-
-    @param str cmdname command name
-    @return bool True if command exists otherwise False
-    """
-    assert 'PATH' in os.environ
-    executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
-    filenames = [ os.path.join(element, str(cmdname)) \
-                  for element in os.environ['PATH'].split(os.pathsep) if element ]
-    return len(filter(executable, filenames)) >= 1
+# =====================
+# Exceptions Clasees
+# =====================
 
 class CommandNotFound(Exception):
     pass
@@ -106,6 +134,10 @@ class CommandExecutedFalur(Exception):
 
     def __str__(self):
         return self.errmsg
+
+# =======================
+# Command Adpater Classes
+# =======================
 
 class SingleCmd(object):
 
