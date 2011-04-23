@@ -20,7 +20,7 @@ def reg_singlecmds(*args):
     """
     import __builtin__
     for cmdname in args:
-        __builtin__.__dict__[cmdname] = SingleCmd(cmdname)
+        __builtin__.__dict__[undashify(cmdname)] = SingleCmd(cmdname)
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -31,6 +31,11 @@ def dashify(string):
     """covert _ to - of string
     """
     return string.replace('_', '-')
+
+def undashify(string):
+    """covert - to _ of string
+    """
+    return string.replace('-', '_')
 
 def transform_kwargs(opt_style, **kwargs):
     """
