@@ -1,3 +1,9 @@
+python-ucltip (0.4.5-1ppa1) natty; urgency=low
+
+  * branch 0.4.5-1 to natty
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Fri, 29 Apr 2011 00:24:59 +0800
+
 python-ucltip (0.4.5-1) unstable; urgency=low
 
   * 0.4.5-1 released
