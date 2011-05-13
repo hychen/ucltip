@@ -162,6 +162,7 @@ class SingleCmd(object):
             status = os.system(' '.join(command))
             if status != 0:
                 raise CommandExecutedFalur(status)
+            return status
         else:
             # Start the process
             proc = subprocess.Popen(command,

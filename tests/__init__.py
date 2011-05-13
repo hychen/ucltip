@@ -20,20 +20,45 @@
 import unittest
 import ucltip
 
-class ConsoleTestCase(unittest.TestCase):
+class UtilsTestCase(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_opttransform(self):
+    def test_kwargsname_to_optionname(self):
+        """test transform keyword arguments's name to command's option name.
+        """
         self.assertEquals(ucltip.optname('k'), '-k')
         self.assertEquals(ucltip.optname('key'), '--key')
         self.assertEquals(ucltip.optname('key_one'), '--key-one')
-        self.assertEquals(['--all','h','--all','i'],ucltip.make_optargs('all', ('h','i')))
-        self.assertEquals(['--all=h','--all=i'],ucltip.make_optargs('all', ('h','i'), 1))
+
+    def test_transform_kwargs_to_booloption(self):
+        """test transform keyword to command's boolean style option.
+        """
+        self.assertEquals(ucltip.transform_kwargs(0, k=True), ['-k'])
+        self.assertEquals(ucltip.transform_kwargs(1, k=True), ['-k'])
+        self.assertEquals(ucltip.transform_kwargs(0, key=True), ['--key'])
+        self.assertEquals(ucltip.transform_kwargs(1, key=True), ['--key'])
+
+    def test_transform_kwargs_to_keyvauleoption(self):
+        """test transform keyword to command's key-value style option name.
+        """
+        self.assertEquals(ucltip.transform_kwargs(0, k=123), ['-k', '123'])
+        self.assertEquals(ucltip.transform_kwargs(1, k=123), ['-k=123'])
+        self.assertEquals(ucltip.transform_kwargs(0, key=123), ['--key', '123'])
+        self.assertEquals(ucltip.transform_kwargs(1, key=123), ['--key=123'])
+
+    def test_make_multi_options(self):
+        """test make multi option string with the same option name
+        """
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 0),
+                          ['--colum','first', '--colum', 'second'])
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 1),
+                          ['--colum=first','--colum=second'])
+
+    def test_cmdexist(self):
+        """check commands exists """
+        self.assertFalse(ucltip.cmdexists(None))
+        self.assertFalse(ucltip.cmdexists(''))
+        self.assertFalse(ucltip.cmdexists(1234.5))
+        self.assertFalse(ucltip.cmdexists(1234))
 
     def test_command_not_found(self):
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, None)
@@ -41,41 +66,24 @@ class ConsoleTestCase(unittest.TestCase):
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, 1234.5)
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '000')
 
-    def test_singlecmd(self):
-        expr = ucltip.SingleCmd('expr')
-        self.assertEquals(expr('3', '+', '4'), '7\n')
-        # test pipe
-        ls = ucltip.SingleCmd('ls')
-        grep = ucltip.SingleCmd('grep')
-        self.assertEquals('setup.py\n',
-                grep('setup.py', stdin=ls(a=True, interact=True).stdout))
+class ExecuteCmdTestCase(unittest.TestCase):
 
-    def test_cmddispatcher(self):
-        zenity = ucltip.CmdDispatcher('zenity')
-        zenity.dry_run=True
-        self.assertEquals(zenity.info(text=1), ['zenity','info', '--text', '1'])
-        zenity.subcmd_prefix='--'
-        self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text', '1'])
-        zenity.opt_style=1
-        self.assertEquals(zenity.info(text=1), ['zenity','--info', '--text=1'])
+    def setUp(self):
+        self.expr = ucltip.SingleCmd('expr')
 
-    def test_regsinglecmds(self):
-        ucltip.reg_singlecmds('expr', 'dpkg', 'grep')
-        self.assertEquals(type(expr), type(dpkg))
+    def tearDown(self):
+        pass
 
-    def test_setdefaultopts(self):
-        ls = ucltip.SingleCmd('ls')
-        ls.dry_run = True
-        ls.opts(a=True, via_shell=True)
-        self.assertEquals(ls.opts(), {'a':True, 'via_shell':True})
-        self.assertEquals(ls('/tmp'), ['ls', '/tmp', '-a'])
-        self.assertEquals(ls('/tmp', a=False), ['ls', '/tmp'])
-        # reset options
-        ls.reset()
-        self.assertEquals(ls('/tmp'), ['ls', '/tmp'])
+    def test_call(self):
+        self.assertEquals(self.expr('3', '+', '4'), '7\n')
+        self.assertRaises(ucltip.CommandExecutedFalur, self.expr, '3', '5', '4')
+        self.assertEquals(self.expr('3', '+', '4', via_shell=True), 0)
 
 def suite():
-    return unittest.makeSuite(ConsoleTestCase, 'test')
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(ExecuteCmdTestCase, 'test'))
+    return suite
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
