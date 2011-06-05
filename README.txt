@@ -139,7 +139,7 @@ and some commands like `zenity`, they have prefix string in their sub command.
 	git = CmdDispatcher('git')
 	git.log()
 	# and you can also give args and options like what SingleCmd can use
-	git.log(raw=True, since='2010')
+	git.log(raw=True, since='2011')
 
 	# you can get Popen instance also
 	proc = git.log(interact=True)

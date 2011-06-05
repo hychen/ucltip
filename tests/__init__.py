@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding=utf8 -*-
 #
-# Author 2010 Hsin-Yi Chen
+# Author 2011 Hsin-Yi Chen
 #
 # This is a free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
