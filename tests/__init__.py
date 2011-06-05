@@ -16,9 +16,14 @@
 # You should have received a copy of the GNU General Public License along with
 # this software; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA 02111-1307 USA
-
+import os
 import unittest
 import ucltip
+
+# setup test env
+def setup_testenv():
+    testbinpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'bin')
+    os.environ['PATH'] = "{0}:{1}".format(os.getenv('PATH'), testbinpath)
 
 class UtilsTestCase(unittest.TestCase):
 
@@ -61,6 +66,7 @@ class UtilsTestCase(unittest.TestCase):
         self.assertFalse(ucltip.cmdexists(1234))
 
     def test_command_not_found(self):
+        """raise Exception if commands does not exist"""
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, None)
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '')
         self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, 1234.5)
@@ -70,14 +76,28 @@ class ExecuteCmdTestCase(unittest.TestCase):
 
     def setUp(self):
         self.expr = ucltip.SingleCmd('expr')
+        self.sed = ucltip.SingleCmd('sed')
 
     def tearDown(self):
-        pass
+        del self.expr
+        del self.sed
 
     def test_call(self):
         self.assertEquals(self.expr('3', '+', '4'), '7\n')
         self.assertRaises(ucltip.CommandExecutedFalur, self.expr, '3', '5', '4')
         self.assertEquals(self.expr('3', '+', '4', via_shell=True), 0)
+
+    def test_pipe(self):
+        """test command pipe line"""
+        first_cmd = self.expr('3','+','4', interact=True)
+        second_cmd = self.sed
+        self.assertEquals('A\n', second_cmd('s/7/A/', stdin=first_cmd.stdout))
+
+    def test_opt(self):
+        """test default options setting"""
+        self.assertRaises(TypeError, self.expr.opts, 1)
+        self.expr.opts(opt1=1,opt2=2)
+        self.assertEquals({'opt1': 1, 'opt2': 2}, self.expr.opts())
 
 def suite():
     suite = unittest.TestSuite()
@@ -86,4 +106,5 @@ def suite():
     return suite
 
 if __name__ == '__main__':
+    setup_testenv()
     unittest.main(defaultTest='suite')
