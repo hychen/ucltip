@@ -99,10 +99,32 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.expr.opts(opt1=1,opt2=2)
         self.assertEquals({'opt1': 1, 'opt2': 2}, self.expr.opts())
 
+class SubCmdTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.parent = ucltip.CmdDispatcher('ucltip-apt-get')
+
+    def test_noparent_call(self):
+        subcmd = ucltip.SubCmd('mock-cmd')
+        self.assertRaises(ucltip.RequireParentCmd, subcmd)
+
+    def test_hasparent_call(self):
+        """test executoing sub command which has parent command"""
+        subcmd = ucltip.SubCmd('install', self.parent)
+        self.assertEquals('ucltip-apt-get install vim\n', subcmd('vim'))
+        self.assertEquals('ucltip-apt-get install vim -b\n', subcmd('vim', b=True))
+        self.assertEquals('ucltip-apt-get install vim -t maverick\n', subcmd('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test maverick\n', subcmd('vim', test='maverick'))
+        # check another option style
+        subcmd.opt_style = 1
+        self.assertEquals('ucltip-apt-get install vim -t=maverick\n', subcmd('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test=maverick\n', subcmd('vim', test='maverick'))
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
     suite.addTest(unittest.makeSuite(ExecuteCmdTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':

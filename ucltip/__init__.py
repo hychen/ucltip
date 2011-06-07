@@ -7,6 +7,7 @@ import os
 __all__ = ['reg_singlecmds',
            'cmdexists',
            'SingleCmd',
+           'SubCmd',
            'CmdDispatcher',
            'CommandNotFound',
            'CommandExecutedFalur']
@@ -19,8 +20,8 @@ def reg_singlecmds(*args):
     """register bound object in current env
     """
     import __builtin__
-    for cmdname in args:
-        __builtin__.__dict__[cmdname] = SingleCmd(cmdname)
+    for name in args:
+        __builtin__.__dict__[name] = SingleCmd(name)
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -78,15 +79,15 @@ def make_optargs(optname, values, opt_style=0):
         __append_opt(ret, optname, v, opt_style)
     return ret
 
-def cmdexists(cmdname):
+def cmdexists(name):
     """check if command exists
 
-    @param str cmdname command name
+    @param str name command name
     @return bool True if command exists otherwise False
     """
     assert 'PATH' in os.environ
     executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
-    filenames = [ os.path.join(element, str(cmdname)) \
+    filenames = [ os.path.join(element, str(name)) \
                   for element in os.environ['PATH'].split(os.pathsep) if element ]
     return len(filter(executable, filenames)) >= 1
 
@@ -102,21 +103,44 @@ class CommandExecutedFalur(Exception):
     def __str__(self):
         return self.errmsg
 
-class SingleCmd(object):
+class RequireParentCmd(Exception):
+    pass
 
-    opt_style = 0
-    execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
+class BaseCmd(object):
 
-    def __init__(self, cmdname=None, opt_style=None):
-        ## used for debug what command string be executed
-        self.__DEBUG__ = False
-        self.dry_run = False
-        self.default_opts = {}
-        self.cmdname = cmdname or self.__class__.__name__.lower()
-        if not self.cmdname or not cmdexists(self.cmdname):
+    #FIXME: removed me
+    __DEBUG__ = False
+    dry_run = False
+
+    def __init__(self, name=None):
+        self.name = name or self.__class__.__name__.lower()
+        if not self.name or not cmdexists(self.name):
             raise CommandNotFound()
-        if opt_style:
-            self.opt_style = opt_style
+
+        # init attributes
+        self.default_opts = {}
+        self.opt_style = 0
+
+    def opts(self, **kwargs):
+        """set default options of command
+
+        @param dict kwargs options dict
+        @return dict default options if no kwargs input
+        @example
+
+            obj.opts(t=3)
+            # the result is {'t':3}
+            obj.opts()
+        """
+        return kwargs and self.default_opts.update(kwargs) or self.default_opts
+
+    def reset(self):
+        """reset default options"""
+        self.default_opts = {}
+
+class SingleCmd(BaseCmd):
+
+    execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
     def __call__(self, *args, **kwargs):
         return self._callProcess(*args, **kwargs)
@@ -124,7 +148,8 @@ class SingleCmd(object):
     def _callProcess(self, *args, **in_kwargs):
         # Handle optional arguments prior to calling transform_kwargs
         # otherwise these'll end up in args, which is bad.
-        kwargs = self.default_opts
+        kwargs = {}
+        kwargs.update(self.opts())
         kwargs.update(in_kwargs)
         _kwargs = {}
         for kwarg in self.execute_kwargs:
@@ -195,56 +220,46 @@ class SingleCmd(object):
         opt_args = transform_kwargs(self.opt_style, **kwargs)
         ext_args = map(str, args)
         args = ext_args + opt_args
-        return [self.cmdname] + args
-
-    def opts(self, **kwargs):
-        """set default options of command
-
-        @param dict kwargs options dict
-        @return dict default options if no kwargs input
-        @example
-
-            obj.opts(t=3)
-            # the result is {'t':3}
-            obj.opts()
-        """
-        if kwargs:
-            self.default_opts.update(kwargs)
-        else:
-            return self.default_opts
-
-    def reset(self):
-        """reset default options"""
-        self.default_opts = {}
+        return [self.name] + args
 
     def __repr__(self):
         opt = "'{0}' ".join(transform_kwargs(self.opt_style, **self.default_opts))
-        return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.cmdname, opt)
+        return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
 
-class CmdDispatcher(SingleCmd):
+class SubCmd(SingleCmd):
+
+    def __init__(self, name, parent=None):
+        self.name = name
+        self.parent = parent
+        self.default_opts = parent and parent.default_opts or {}
+        self.opt_style = parent and parent.opt_style or 0
+
+    def make_callargs(self, *args, **kwargs):
+        if not self.parent:
+            raise RequireParentCmd
+        if self.parent.subcmd_prefix:
+            self.name = subcmd_prefix + self.name
+        args = super(SubCmd, self).make_callargs(*args, **kwargs)
+        args.insert(0, self.parent.name)
+        return args
+
+class CmdDispatcher(BaseCmd):
 
     subcmd_prefix = None
 
-    def __init__(self, cmdname=None, opt_style=0, subcmd_prefix=None):
+    def __init__(self, name=None, opt_style=0, subcmd_prefix=None):
         """Constructor
 
-        @param str cmdname command name
+        @param str name command name
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
+        self._subcmds = {}
         if subcmd_prefix:
             self.subcmd_prefix = subcmd_prefix
-        SingleCmd.__init__(self, cmdname, opt_style)
+        BaseCmd.__init__(self, name)
 
     def __getattr__(self, name):
         if name[:1] == '_':
             raise AttributeError(name)
-        self.subcmd = dashify(name)
-        return lambda *args, **kwargs: self._callProcess(*args, **kwargs)
-
-    def _callProcess(self, *args, **kwargs):
-        if self.subcmd_prefix:
-            self.subcmd = self.subcmd_prefix + self.subcmd
-        args = list(args)
-        args.insert(0, self.subcmd)
-        return super(CmdDispatcher, self)._callProcess(*args, **kwargs)
+        return self._subcmds.setdefault(name, SubCmd(name, self))
