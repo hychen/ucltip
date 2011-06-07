@@ -98,6 +98,8 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.expr.opts, 1)
         self.expr.opts(opt1=1,opt2=2)
         self.assertEquals({'opt1': 1, 'opt2': 2}, self.expr.opts())
+        self.expr.reset()
+        self.assertEquals({}, self.expr.opts())
 
 class SubCmdTestCase(unittest.TestCase):
 
