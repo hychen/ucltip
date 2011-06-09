@@ -32,16 +32,15 @@ extra = {}
 if sys.platform == 'win32':
     extra = {'shell': True}
 
+# =============================
+# Utility functions and classes
+# =============================
 def reg_singlecmds(*args):
     """register bound object in current env
     """
     import __builtin__
     for cmdname in args:
         __builtin__.__dict__[undashify(cmdname)] = SingleCmd(cmdname)
-
-# =============================
-# Utility functions and classes
-# =============================
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -68,12 +67,13 @@ def cmdexists(cmdname):
     executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
     filenames = [ os.path.join(element, str(cmdname)) \
                   for element in os.environ['PATH'].split(os.pathsep) if element ]
-    return len(filter(executable, filenames)) >= 1
+    for f in filenames:
+        if executable(f):
+            return True
 
 # =====================
 # Options and Arguments
 # =====================
-
 def transform_kwargs(opt_style, **kwargs):
     """
     Transforms Python style kwargs into command line options.
@@ -135,7 +135,6 @@ def cmdexists(name):
 # =====================
 # Exceptions Clasees
 # =====================
-
 class CommandNotFound(Exception):
     pass
 
@@ -148,26 +147,16 @@ class CommandExecutedFalur(Exception):
     def __str__(self):
         return self.errmsg
 
-
 class RequireParentCmd(Exception):
     pass
 
 # =======================
 # Command Adpater Classes
 # =======================
-
 class BaseCmd(object):
-
-    #FIXME: removed me
-    __DEBUG__ = False
-    dry_run = False
 
     def __init__(self, name=None):
         self.name = name or self.__class__.__name__.lower()
-        if not self.name or not cmdexists(self.name):
-            raise CommandNotFound()
-
-        # init attributes
         self.default_opts = {}
         self.opt_style = 0
 
@@ -188,7 +177,7 @@ class BaseCmd(object):
         """reset default options"""
         self.default_opts = {}
 
-class SingleCmd(BaseCmd):
+class ExecutableCmd(BaseCmd):
 
     execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
 
@@ -210,9 +199,7 @@ class SingleCmd(BaseCmd):
 
         # Prepare the argument list
         call = self.make_callargs(*args, **kwargs)
-        if self.__DEBUG__ or self.dry_run:
-            print "DBG: execute cmd '{0}'".format(' '.join(call))
-        return call if self.dry_run else self.execute(call, **_kwargs)
+        return self.execute(call, **_kwargs)
 
     def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
         """execute command
@@ -273,40 +260,53 @@ class SingleCmd(BaseCmd):
         return [self.name] + args
 
     def __repr__(self):
-        opt = "'{0}' ".join(transform_kwargs(self.opt_style, **self.default_opts))
+        opt = " ".join(transform_kwargs(self.opt_style, **self.default_opts))
         return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
 
-class SubCmd(SingleCmd):
+class SingleCmd(ExecutableCmd):
+
+    def __init__(self, name):
+        if not cmdexists(name):
+            raise CommandNotFound
+        super(SingleCmd, self).__init__(name)
+
+class SubCmd(ExecutableCmd):
 
     def __init__(self, name, parent=None):
         self.name = name
         self.parent = parent
         self.default_opts = parent and parent.default_opts or {}
-        self.opt_style = parent and parent.opt_style or 0
+
+        # method delegations
+        if parent:
+            self.opts = parent.opts
+
+    @property
+    def opt_style(self):
+        return self.parent.opt_style
 
     def make_callargs(self, *args, **kwargs):
         if not self.parent:
             raise RequireParentCmd
         if self.parent.subcmd_prefix:
-            self.name = subcmd_prefix + self.name
+            self.name = self.parent.subcmd_prefix + self.name
         args = super(SubCmd, self).make_callargs(*args, **kwargs)
         args.insert(0, self.parent.name)
         return args
 
 class CmdDispatcher(BaseCmd):
 
-    subcmd_prefix = None
-
-    def __init__(self, name=None, opt_style=0, subcmd_prefix=None):
+    def __init__(self, name):
         """Constructor
 
         @param str name command name
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
+        if not cmdexists(name):
+            raise CommandNotFound
+        self.subcmd_prefix = None
         self._subcmds = {}
-        if subcmd_prefix:
-            self.subcmd_prefix = subcmd_prefix
         BaseCmd.__init__(self, name)
 
     def __getattr__(self, name):

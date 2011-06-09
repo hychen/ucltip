@@ -78,10 +78,6 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.expr = ucltip.SingleCmd('expr')
         self.sed = ucltip.SingleCmd('sed')
 
-    def tearDown(self):
-        del self.expr
-        del self.sed
-
     def test_call(self):
         self.assertEquals(self.expr('3', '+', '4'), '7\n')
         self.assertRaises(ucltip.CommandExecutedFalur, self.expr, '3', '5', '4')
@@ -105,28 +101,59 @@ class SubCmdTestCase(unittest.TestCase):
 
     def setUp(self):
         self.parent = ucltip.CmdDispatcher('ucltip-apt-get')
+        self.subcmd = ucltip.SubCmd('mock-cmd')
+        self.psubcmd = ucltip.SubCmd('install', self.parent)
 
     def test_noparent_call(self):
-        subcmd = ucltip.SubCmd('mock-cmd')
-        self.assertRaises(ucltip.RequireParentCmd, subcmd)
+        self.assertRaises(ucltip.RequireParentCmd, self.subcmd)
 
     def test_hasparent_call(self):
         """test executoing sub command which has parent command"""
-        subcmd = ucltip.SubCmd('install', self.parent)
-        self.assertEquals('ucltip-apt-get install vim\n', subcmd('vim'))
-        self.assertEquals('ucltip-apt-get install vim -b\n', subcmd('vim', b=True))
-        self.assertEquals('ucltip-apt-get install vim -t maverick\n', subcmd('vim', t='maverick'))
-        self.assertEquals('ucltip-apt-get install vim --test maverick\n', subcmd('vim', test='maverick'))
+        self.assertEquals('ucltip-apt-get install vim\n', self.psubcmd('vim'))
+        self.assertEquals('ucltip-apt-get install vim -b\n', self.psubcmd('vim', b=True))
+        self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.psubcmd('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.psubcmd('vim', test='maverick'))
         # check another option style
-        subcmd.opt_style = 1
-        self.assertEquals('ucltip-apt-get install vim -t=maverick\n', subcmd('vim', t='maverick'))
-        self.assertEquals('ucltip-apt-get install vim --test=maverick\n', subcmd('vim', test='maverick'))
+        self.parent.opt_style = 1
+        self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.psubcmd('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.psubcmd('vim', test='maverick'))
+
+    def test_hasparent_opts(self):
+        self.parent.opts(def_opt=True, def_opt2=1)
+        self.assertEquals({'def_opt':True, 'def_opt2':1}, self.psubcmd.parent.opts())
+        self.assertEquals({'def_opt':True, 'def_opt2':1}, self.psubcmd.opts())
+
+class CmdDispatcherTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cmdd = ucltip.CmdDispatcher('ucltip-apt-get')
+
+    def test_callsubcmd(self):
+        """test call subcmd by cmd dispatcher"""
+        self.assertEquals('ucltip-apt-get install vim\n', self.cmdd.install('vim'))
+        self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.cmdd.install('vim', test='maverick'))
+        # check another option style
+        self.cmdd.opt_style = 1
+        self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
+        self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.cmdd.install('vim', test='maverick'))
+        # check another sub command prefix
+        self.cmdd.subcmd_prefix = '--'
+        self.assertEquals('ucltip-apt-get --install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
+
+    def test_opts(self):
+        """test option of cmd dispatcher"""
+        self.cmdd.opts(def_opt=1)
+        self.assertEquals('ucltip-apt-get install vim --def-opt 1 -t maverick\n', self.cmdd.install('vim', t='maverick'))
+        self.cmdd.opts(def_opt=False)
+        self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
 
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
     suite.addTest(unittest.makeSuite(ExecuteCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(CmdDispatcherTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':
