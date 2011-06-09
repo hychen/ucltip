@@ -148,12 +148,20 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.cmdd.opts(def_opt=False)
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
 
+class CustomClassTestCase(unittest.TestCase):
+
+    def test_cmd(self):
+        class LS(ucltip.Cmd):
+            pass
+        self.assertEquals(LS().name, 'ls')
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
     suite.addTest(unittest.makeSuite(ExecuteCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CmdDispatcherTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':

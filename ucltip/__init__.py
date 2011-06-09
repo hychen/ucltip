@@ -265,10 +265,10 @@ class ExecutableCmd(BaseCmd):
 
 class Cmd(ExecutableCmd):
 
-    def __init__(self, name):
-        if not cmdexists(name):
-            raise CommandNotFound
+    def __init__(self, name=None):
         super(Cmd, self).__init__(name)
+        if not cmdexists(self.name):
+            raise CommandNotFound
 
 class SubCmd(ExecutableCmd):
 
@@ -296,18 +296,18 @@ class SubCmd(ExecutableCmd):
 
 class CmdDispatcher(BaseCmd):
 
-    def __init__(self, name):
+    def __init__(self, name=None):
         """Constructor
 
         @param str name command name
         @param str opt_style option style
         @param str subcmd_prefix prefix of sub command
         """
-        if not cmdexists(name):
-            raise CommandNotFound
         self.subcmd_prefix = None
         self._subcmds = {}
         BaseCmd.__init__(self, name)
+        if not cmdexists(name):
+            raise CommandNotFound
 
     def __getattr__(self, name):
         if name[:1] == '_':
