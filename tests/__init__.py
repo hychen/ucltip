@@ -67,16 +67,16 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_command_not_found(self):
         """raise Exception if commands does not exist"""
-        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, None)
-        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '')
-        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, 1234.5)
-        self.assertRaises(ucltip.CommandNotFound, ucltip.SingleCmd, '000')
+        self.assertRaises(ucltip.CommandNotFound, ucltip.Cmd, None)
+        self.assertRaises(ucltip.CommandNotFound, ucltip.Cmd, '')
+        self.assertRaises(ucltip.CommandNotFound, ucltip.Cmd, 1234.5)
+        self.assertRaises(ucltip.CommandNotFound, ucltip.Cmd, '000')
 
 class ExecuteCmdTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.expr = ucltip.SingleCmd('expr')
-        self.sed = ucltip.SingleCmd('sed')
+        self.expr = ucltip.Cmd('expr')
+        self.sed = ucltip.Cmd('sed')
 
     def test_call(self):
         self.assertEquals(self.expr('3', '+', '4'), '7\n')

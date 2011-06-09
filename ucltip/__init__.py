@@ -18,7 +18,7 @@ Here is a simple usage example that launching a Zenity info dialog in Python
 __all__ = ['reg_singlecmds',
            'transform_kwargs',
            'cmdexists',
-           'SingleCmd',
+           'Cmd',
            'SubCmd',
            'CmdDispatcher',
            'CommandNotFound',
@@ -40,7 +40,7 @@ def reg_singlecmds(*args):
     """
     import __builtin__
     for cmdname in args:
-        __builtin__.__dict__[undashify(cmdname)] = SingleCmd(cmdname)
+        __builtin__.__dict__[undashify(cmdname)] = Cmd(cmdname)
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -212,8 +212,8 @@ class ExecutableCmd(BaseCmd):
 
         @example
             # the same as echo `ls -al|grep Dox`
-            ls = ucltip.SingleCmd('ls')
-            grep = ucltip.SingleCmd('grep')
+            ls = ucltip.Cmd('ls')
+            grep = ucltip.Cmd('grep')
             print grep('Dox', stdin=ls(a=True, l=True, interact=True).stdout)
         """
         assert not (interact and via_shell),\
@@ -263,12 +263,12 @@ class ExecutableCmd(BaseCmd):
         opt = " ".join(transform_kwargs(self.opt_style, **self.default_opts))
         return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
 
-class SingleCmd(ExecutableCmd):
+class Cmd(ExecutableCmd):
 
     def __init__(self, name):
         if not cmdexists(name):
             raise CommandNotFound
-        super(SingleCmd, self).__init__(name)
+        super(Cmd, self).__init__(name)
 
 class SubCmd(ExecutableCmd):
 
