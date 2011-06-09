@@ -152,18 +152,6 @@ def make_optargs(optname, values, opt_style=0):
         __append_opt(ret, optname, v, opt_style)
     return ret
 
-def cmdexists(name):
-    """check if command exists
-
-    @param str name command name
-    @return bool True if command exists otherwise False
-    """
-    assert 'PATH' in os.environ
-    executable = lambda filename: os.path.isfile(filename) and os.access(filename, os.X_OK)
-    filenames = [ os.path.join(element, str(name)) \
-                  for element in os.environ['PATH'].split(os.pathsep) if element ]
-    return len(filter(executable, filenames)) >= 1
-
 # =====================
 # Exceptions Clasees
 # =====================
