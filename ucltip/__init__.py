@@ -1,7 +1,22 @@
-# the ideas and a lot of codes from GitPython project
-# @author Hsin-Yi Chen (hychen)
-
-"""Command-line adapt library
+#!/usr/bin/env python
+# -*- encoding=utf8 -*-
+#
+# Author 2011 Hsin-Yi Chen
+#
+# This is a free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This software is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this software; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA 02111-1307 USA
+"""Command-line tool adapter library
 
 This module is a command-line adapter library that:
 
@@ -9,20 +24,33 @@ This module is a command-line adapter library that:
       Python arguments and keyword arguments.
     - provide a way to execute command-line tools in Python by OO way.
 
-Here is a simple usage example that launching a Zenity info dialog in Python
+Here is a example that execute `ls -al` in current directory
 
-    zenity = ucltip.CmdDispatcher('zenity', 1, '--')
+    ls = ucltip.Cmd('ls')
+    ls(al=True)
+
+and the following is a simple usage example that launching a Zenity info dialog in Python
+
+    zenity = ucltip.CmdDispatcher('zenity')
+    zenity.subcmd_prefix = '--'
+    zenity.opt_style = 1
     zenity.info(text="The first example", width=500)
+
+The module contains the following public classes:
+
+    - Cmd -- Object for mapping a command has no sub commands
+    - CmdDispatcher -- Object for mapping a command has sub commands
 """
 
-__all__ = ['reg_singlecmds',
-           'transform_kwargs',
+__all__ = ['regcmds',
+           'make_optargs',
            'cmdexists',
            'Cmd',
            'SubCmd',
            'CmdDispatcher',
            'CommandNotFound',
-           'CommandExecutedFalur']
+           'CommandExecutedFalur',
+           'RequireParentCmd']
 
 import subprocess
 import sys
@@ -35,12 +63,16 @@ if sys.platform == 'win32':
 # =============================
 # Utility functions and classes
 # =============================
-def reg_singlecmds(*args):
-    """register bound object in current env
+def regcmds(*args, **kwargs):
+    """register bound object in current environment
+
+    @param cls Cmd or CmdDispatcher
     """
     import __builtin__
+    cls = kwargs.get('cls') or Cmd
+    assert cls in (Cmd, CmdDispatcher)
     for cmdname in args:
-        __builtin__.__dict__[undashify(cmdname)] = Cmd(cmdname)
+        __builtin__.__dict__[undashify(cmdname)] = cls(cmdname)
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -266,6 +298,14 @@ class ExecutableCmd(BaseCmd):
 class Cmd(ExecutableCmd):
 
     def __init__(self, name=None):
+        """Object for mapping a command has no sub commands
+
+        Keyword Arguments:
+            - name -- A string indicating the command name will be executed
+            - opt_style - A interger number indicating the option style, if
+               the vaule is 1, then the option string will be --$opt=$value,
+               otherwise the option string is --$opt $value
+        """
         super(Cmd, self).__init__(name)
         if not cmdexists(self.name):
             raise CommandNotFound
@@ -273,6 +313,15 @@ class Cmd(ExecutableCmd):
 class SubCmd(ExecutableCmd):
 
     def __init__(self, name, parent=None):
+        """Object for mapping a sub command, this object can not be executed without
+           a CmdDispatcher parent object.
+
+        Keyword Arguments:
+            - name -- A string indicating the sub command name will be executed
+            - parent -- A CmdDispatcher provides main command name, default opt_style,
+               options, and subcmd_prefix.
+            - opt_style -- delegate to Parent Command opt_style (read only)
+        """
         self.name = name
         self.parent = parent
         self.default_opts = parent and parent.default_opts or {}
@@ -297,11 +346,14 @@ class SubCmd(ExecutableCmd):
 class CmdDispatcher(BaseCmd):
 
     def __init__(self, name=None):
-        """Constructor
+        """Object for mapping a command has sub commands
 
-        @param str name command name
-        @param str opt_style option style
-        @param str subcmd_prefix prefix of sub command
+        Keyword Arguments:
+            - name -- A string indicating the sub command name will be executed
+            - subcmd_prefix -- A string indicating prefix string of a sub command if required
+            - opt_style - A interger number indicating the option style, if
+               the vaule is 1, then the option string will be --$opt=$value,
+               otherwise the option string is --$opt $value
         """
         self.subcmd_prefix = None
         self._subcmds = {}

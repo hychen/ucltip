@@ -155,6 +155,17 @@ class CustomClassTestCase(unittest.TestCase):
             pass
         self.assertEquals(LS().name, 'ls')
 
+class HelperTestCase(unittest.TestCase):
+
+    def test_call(self):
+        ucltip.regcmds('ls', 'sed')
+        self.assertEquals(type(ls), ucltip.Cmd)
+        self.assertEquals(type(sed), ucltip.Cmd)
+        ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
+        self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
+        self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
+        self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
@@ -162,6 +173,7 @@ def suite():
     suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CmdDispatcherTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(HelperTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':
