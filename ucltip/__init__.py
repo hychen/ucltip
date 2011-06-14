@@ -170,6 +170,9 @@ class CommandExecutedFalur(Exception):
 class RequireParentCmd(Exception):
     pass
 
+class CmdConfiguration(object):
+    pass
+
 # =======================
 # Command Adpater Classes
 # =======================
@@ -177,8 +180,16 @@ class BaseCmd(object):
 
     def __init__(self, name=None):
         self.name = name or self.__class__.__name__.lower()
-        self.default_opts = {}
-        self.opt_style = 0
+        self.conf = CmdConfiguration()
+        self.conf.default_opts = {}
+        self.conf.opt_style = 0
+
+    @property
+    def opt_style(self):
+        return self.conf.opt_style
+    @opt_style.setter
+    def opt_style(self, value):
+        self.conf.opt_style = value
 
     def opts(self, **kwargs):
         """set default options of command
@@ -191,11 +202,11 @@ class BaseCmd(object):
             # the result is {'t':3}
             obj.opts()
         """
-        return kwargs and self.default_opts.update(kwargs) or self.default_opts
+        return kwargs and self.conf.default_opts.update(kwargs) or self.conf.default_opts
 
     def reset(self):
         """reset default options"""
-        self.default_opts = {}
+        self.conf.default_opts = {}
 
 class ExecutableCmd(BaseCmd):
 
@@ -274,13 +285,13 @@ class ExecutableCmd(BaseCmd):
 
     def make_callargs(self, *args, **kwargs):
         # Prepare the argument list
-        opt_args = transform_kwargs(self.opt_style, **kwargs)
+        opt_args = transform_kwargs(self.conf.opt_style, **kwargs)
         ext_args = map(str, args)
         args = ext_args + opt_args
         return [self.name] + args
 
     def __repr__(self):
-        opt = " ".join(transform_kwargs(self.opt_style, **self.default_opts))
+        opt = " ".join(transform_kwargs(self.conf.opt_style, **self.default_opts))
         return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
 
 class Cmd(ExecutableCmd):
@@ -310,17 +321,15 @@ class SubCmd(ExecutableCmd):
                options, and subcmd_prefix.
             - opt_style -- delegate to Parent Command opt_style (read only)
         """
-        self.name = name
+        super(SubCmd, self).__init__(name)
         self.parent = parent
-        self.default_opts = parent and parent.default_opts or {}
 
         # method delegations
         if parent:
-            self.opts = parent.opts
+            self.set_parent(parent)
 
-    @property
-    def opt_style(self):
-        return self.parent.opt_style
+    def set_parent(self, parent):
+            self.conf = self.parent.conf
 
     def make_callargs(self, *args, **kwargs):
         if not self.parent:
