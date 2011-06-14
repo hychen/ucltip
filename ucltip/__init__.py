@@ -170,12 +170,14 @@ class CommandExecutedFalur(Exception):
 class RequireParentCmd(Exception):
     pass
 
-class CmdConfiguration(object):
-    pass
-
 # =======================
 # Command Adpater Classes
 # =======================
+class CmdConfiguration(object):
+    """Object for sharing common configurations
+    """
+    pass
+
 class BaseCmd(object):
 
     def __init__(self, name=None):
@@ -295,41 +297,45 @@ class ExecutableCmd(BaseCmd):
         return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
 
 class Cmd(ExecutableCmd):
+    """Object for mapping a command has no sub commands
+
+    Keyword Arguments:
+        - name -- A string indicating the command name will be executed
+        - opt_style - A interger number indicating the option style, if
+           the vaule is 1, then the option string will be --$opt=$value,
+           otherwise the option string is --$opt $value
+    """
 
     def __init__(self, name=None):
-        """Object for mapping a command has no sub commands
-
-        Keyword Arguments:
-            - name -- A string indicating the command name will be executed
-            - opt_style - A interger number indicating the option style, if
-               the vaule is 1, then the option string will be --$opt=$value,
-               otherwise the option string is --$opt $value
-        """
         super(Cmd, self).__init__(name)
         if not cmdexists(self.name):
             raise CommandNotFound
 
 class SubCmd(ExecutableCmd):
+    """Object for mapping a sub command, this object can not be executed without
+       a CmdDispatcher parent object.
+
+    Keyword Arguments:
+        - name -- A string indicating the sub command name will be executed
+        - parent -- A CmdDispatcher provides main command name, default opt_style,
+           options, and subcmd_prefix.
+        - opt_style -- delegate to Parent Command opt_style (read only)
+    """
 
     def __init__(self, name, parent=None):
-        """Object for mapping a sub command, this object can not be executed without
-           a CmdDispatcher parent object.
-
-        Keyword Arguments:
-            - name -- A string indicating the sub command name will be executed
-            - parent -- A CmdDispatcher provides main command name, default opt_style,
-               options, and subcmd_prefix.
-            - opt_style -- delegate to Parent Command opt_style (read only)
-        """
         super(SubCmd, self).__init__(name)
         self.parent = parent
 
-        # method delegations
+        # data delegations
         if parent:
             self.set_parent(parent)
 
     def set_parent(self, parent):
-            self.conf = self.parent.conf
+        """set parent and the common configuration will be override by the parent
+
+        @param CmdDispatcher
+        """
+        self.conf = self.parent.conf
 
     def make_callargs(self, *args, **kwargs):
         if not self.parent:
@@ -341,17 +347,16 @@ class SubCmd(ExecutableCmd):
         return args
 
 class CmdDispatcher(BaseCmd):
+    """Object for mapping a command has sub commands
 
+    Keyword Arguments:
+        - name -- A string indicating the sub command name will be executed
+        - subcmd_prefix -- A string indicating prefix string of a sub command if required
+        - opt_style - A interger number indicating the option style, if
+           the vaule is 1, then the option string will be --$opt=$value,
+           otherwise the option string is --$opt $value
+    """
     def __init__(self, name=None):
-        """Object for mapping a command has sub commands
-
-        Keyword Arguments:
-            - name -- A string indicating the sub command name will be executed
-            - subcmd_prefix -- A string indicating prefix string of a sub command if required
-            - opt_style - A interger number indicating the option style, if
-               the vaule is 1, then the option string will be --$opt=$value,
-               otherwise the option string is --$opt $value
-        """
         self.subcmd_prefix = None
         self._subcmds = {}
         BaseCmd.__init__(self, name)
