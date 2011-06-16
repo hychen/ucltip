@@ -97,6 +97,11 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.expr.reset()
         self.assertEquals({}, self.expr.opts())
 
+    def test_repr(self):
+        self.assertEquals("Cmd object bound 'expr'", "{0}".format(self.expr))
+        self.expr.opts(a=True)
+        self.assertEquals("Cmd object bound 'expr -a'", "{0}".format(self.expr))
+
 class SubCmdTestCase(unittest.TestCase):
 
     def setUp(self):
