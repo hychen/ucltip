@@ -4,149 +4,80 @@ UCLTIP - Use command line tool in Python
 ========================================
 
 This library makes you use command line tool in Python more easier.
-The original idea and most of basic codes are from GitPython project
-`http://pypi.python.org/pypi/GitPython/`
+The original idea are from GitPython project `http://pypi.python.org/pypi/GitPython/`
 
-Basic Usage
------------
+The basic concept is to transform:
 
-::
+1) command as a instance,
+2) command options as arguments or function/method keyword arguments.
 
-	# without options
-	uname = SingleCmd('uname')
-	# result is Linux
-	print uname()
+Feature:
 
-	# with args
-	expr  = SingleCmd('expr')
-	# result is 10
-	print expr(7, '+', 3)
+- Transform CLI Tool arguments to Python function/method arguments
+- Transform CLI Tool Boolean option style to Python function/method keyword arguments
+- Transform CLI Tool Key-Value option style to Python function/method keyword arguments
+- Transform CLI Tool Key-Value option style to Python function/method keyword arguments
+- Transform CLI Command as Python Class and use it in your script
+- Set default options of Command for multiple use
 
-	# with options, the style is '-a - l'
-	# example: ls -a -l
-	ls = SingleCmd('ls')
-	# enable debug mode to see what command string will be executed.
-	# show the debug message like this: DBG: execute cmd 'ls -a -l'
-	ls.__DEBUG__ = True
-	print ls(l=True, a=True)
-
-	# with boolean options, the style is 'ls --all --almost-all'
-	# variable has '-' should replaced by '_', otherwise syntax error happens
-	print ls(all=True, almost_all=True)
-
-	# with key-value optons, has 2 different style,
-	# `--key value` or `--key=value`, you can use opt_style variable to control them
-	wget = SingleCmd('wget')
-
-	# replacement of wget -o log http://url
-	wget('http://url', o='log')
-
-	# replacement of wget -o log=http://url
-	wget = SingleCmd('wget', opt_style=1)
-	wget('http://url', o='log')
-
-	# you can also overwrite the bound command
-	ls.cmdname = 'echo'
-	# the result is
-	# DBG: execute cmd 'echo hi'
-	#'hi\n'
-	print ls("hi")
-
-	# some options is mutiple, which means the name is name, but you can give
-	# many different values, for example
-	# `foo -a -b -o Dir=/var -o Dir::Cache=/tmp`
-	# so you need to use make_optargs to create args if the opt name is duplicate
-	optargs = ucltip.make_optargs('o', ('Dir=/var','Dir::Cache=/tmp'))
-	SingleCmd('foo')(optargs, a=True, b=True)
-
-The command be executed by subprocess.call, it bypass the shell.
+Example
+-------
 
 ::
 
-	# the result is $HOME, and it will not show output directly
-	print SingleCmd('echo')("$HOME")
+	>>>expr = ucltip.Cmd('expr')
+	>>>ret = expr(3, '+', 4)
+	>>>ret
+	"7\n"
 
-if you want execute command via shell and use shell enviroment variable, please
-do as follow, if args of function includes `via_shell=True`, the command be executed by os.system
-
-::
-
-	# the result is "/home/somebody", and show output directly
-	SingleCmd('echo')("$HOME", via_shell=True)
-
-And here is the replacement if you want to do pipe for mutiple commands
+create a Cmd callable object
 
 ::
+	>>>expr = ucltip.Cmd('expr')
 
-        ls = SingleCmd('ls')
-        grep = SingleCmd('grep')
-	# the result is setup.py
-	print grep('setup.py', stdin=ls(a=True, interact=True).stdout))
-
-	#p.s ls(a=True, interact=True) return a Popen instance, so you can have more control
-	#    of that process
-
-Handling Error of command execution
------------------------------------
-if the command you want to use is not exists, the exception ucltip.CommandNotFound raises
+run Cmd object as a function to get result like executing `expr 3 + 4` in shell,
+the result will be storeged in '''ret''' variable, as the following shows, you can think
+command line tool arguments as Python function arguments.
 
 ::
+	>>>ret = expr(3, '+', 4)
 
-	>> a=ucltip.SingleCmd('oo')
-	Traceback (most recent call last):
-	  File "<stdin>", line 1, in <module>
-	  File "ucltip/__init__.py", line 103, in __init__
-	    raise CommandNotFound()
-	ucltip.CommandNotFound
-
-if the command be executed falied, the exception ucltip.CommandExecutedFalur raises
+if you want to only check what command string will be combined, you can doing dry run,
+but ramind the command string will be split as a list.
 
 ::
+	>>>expr = ucltip.Cmd('expr')
+	>>>expr.conf.dry_run = True
+	>>>expr(3, "+", 4)
+	['expr', '3', '+', '4']
 
-	>>> a=ucltip.SingleCmd('ls')
-	>>> a
-	SingleCmd object bound 'ls'
-	>>> a(ccc=True)
-	Traceback (most recent call last):
-	  File "<stdin>", line 1, in <module>
-	  File "ucltip/__init__.py", line 109, in __call__
-	    return self._callProcess(*args, **kwargs)
-	  File "ucltip/__init__.py", line 126, in _callProcess
-	    return self.execute(call, **_kwargs)
-	  File "ucltip/__init__.py", line 169, in execute
-	    raise CommandExecutedFalur(status, stderr_value)
-	ucltip.CommandExecutedFalur: ls: unrecognized option '--ccc'
-	Try `ls --help' for more information.
+Command Option
+--------------
 
-here is a example to hanlde error:
+so far, we already leanr how to execute command with arguments, but how about command options?
+it is pretty easy also, just think command option like python keyword arguments.
 
-::
+Boolean option
+-------------
 
-	try:
-		print ucltip.SingleCmd('ls')
-	except ucltip.CommandExecutedFalur as e:
-		print e
-
-Command Dispatcher
-------------------
-
-Some command tools has sub command, like `git`, `zenity`, `pbuilder`, `apt-get`, etc.
-and some commands like `zenity`, they have prefix string in their sub command.
+when the type of keyword arguments's value is boolean, then this kind of keyword arguments
+will be converted to command boolean option, for example, `-a` is equal '''func(a=True)'''
 
 ::
+	>>>ls('/tmp', a=True)
+	['ls', '/tmp', '-a']
 
-	# the sub command name is the method name
-	git = CmdDispatcher('git')
-	git.log()
-	# and you can also give args and options like what SingleCmd can use
-	git.log(raw=True, since='2011')
+Key-Value option
+----------------
 
-	# you can get Popen instance also
-	proc = git.log(interact=True)
+::
+	>>>ls('tmp', quoting_style='c')
+	['ls', '--quoting-style', 'c']
 
-	# zenity has '--' prefix in its sub command, so you need to specify prefix string
-	# and option style
-	zenity = CmdDispatcher('zneity', opt_style=1, subcmd_prefix='--')
+::
+	>>>ls.conf.opt_style = 1
+	>>>ls('tmp', quoting_style='c')
+	['ls', '--quoting-style=c']
 
-	# zneity --info --text=hi
-	zneity.info(text="hi")
+CmdDispatcher
+-------------
