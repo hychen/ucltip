@@ -97,6 +97,11 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.expr.reset()
         self.assertEquals({}, self.expr.opts())
 
+    def test_dry_run(self):
+        """test dry_run """
+        self.expr.conf.dry_run = True
+        self.assertEquals(['expr', '1', '+', '2'], self.expr(1, '+', 2))
+
 class SubCmdTestCase(unittest.TestCase):
 
     def setUp(self):

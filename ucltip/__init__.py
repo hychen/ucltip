@@ -176,15 +176,17 @@ class RequireParentCmd(Exception):
 class CmdConfiguration(object):
     """Object for sharing common configurations
     """
-    pass
+    def __init__(self):
+        self.dry_run = False
+        self.debug = False
+        self.default_opts = {}
+        self.opt_style = 0
 
 class BaseCmd(object):
 
     def __init__(self, name=None):
         self.name = name or self.__class__.__name__.lower()
         self.conf = CmdConfiguration()
-        self.conf.default_opts = {}
-        self.conf.opt_style = 0
 
     @property
     def opt_style(self):
@@ -232,7 +234,7 @@ class ExecutableCmd(BaseCmd):
 
         # Prepare the argument list
         call = self.make_callargs(*args, **kwargs)
-        return self.execute(call, **_kwargs)
+        return self.conf.dry_run and call or self.execute(call, **_kwargs)
 
     def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
         """execute command
