@@ -340,7 +340,7 @@ class SubCmd(ExecutableCmd):
     def make_callargs(self, *args, **kwargs):
         if not self.parent:
             raise RequireParentCmd
-        if self.parent.subcmd_prefix:
+        if self.parent.subcmd_prefix and not self.parent.subcmd_prefix in self.name:
             self.name = self.parent.subcmd_prefix + self.name
         args = super(SubCmd, self).make_callargs(*args, **kwargs)
         args.insert(0, self.parent.name)

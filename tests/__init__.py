@@ -153,6 +153,10 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.cmdd.opts(def_opt=False)
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
 
+    def test_subcmd_prefix(self):
+        self.cmdd.subcmd_prefix = '--'
+        self.assertEquals('ucltip-apt-get --install\n', self.cmdd.install())
+
 class CustomClassTestCase(unittest.TestCase):
 
     def test_cmd(self):
