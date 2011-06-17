@@ -295,8 +295,8 @@ class ExecutableCmd(BaseCmd):
         return [self.name] + args
 
     def __repr__(self):
-        opt = " ".join(transform_kwargs(self.conf.opt_style, **self.default_opts))
-        return "{0} object bound '{1}' {2}".format(self.__class__.__name__, self.name, opt)
+        opt = self.opts() and ' ' + " ".join(transform_kwargs(self.conf.opt_style, **self.opts())) or ''
+        return "{0} object bound '{1}{2}'".format(self.__class__.__name__, self.name, opt)
 
 class Cmd(ExecutableCmd):
     """Object for mapping a command has no sub commands
@@ -342,7 +342,7 @@ class SubCmd(ExecutableCmd):
     def make_callargs(self, *args, **kwargs):
         if not self.parent:
             raise RequireParentCmd
-        if self.parent.subcmd_prefix:
+        if self.parent.subcmd_prefix and not self.parent.subcmd_prefix in self.name:
             self.name = self.parent.subcmd_prefix + self.name
         args = super(SubCmd, self).make_callargs(*args, **kwargs)
         args.insert(0, self.parent.name)

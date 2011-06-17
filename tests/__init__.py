@@ -102,6 +102,11 @@ class ExecuteCmdTestCase(unittest.TestCase):
         self.expr.conf.dry_run = True
         self.assertEquals(['expr', '1', '+', '2'], self.expr(1, '+', 2))
 
+    def test_repr(self):
+        self.assertEquals("Cmd object bound 'expr'", "{0}".format(self.expr))
+        self.expr.opts(a=True)
+        self.assertEquals("Cmd object bound 'expr -a'", "{0}".format(self.expr))
+
 class SubCmdTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -152,6 +157,10 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get install vim --def-opt 1 -t maverick\n', self.cmdd.install('vim', t='maverick'))
         self.cmdd.opts(def_opt=False)
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
+
+    def test_subcmd_prefix(self):
+        self.cmdd.subcmd_prefix = '--'
+        self.assertEquals('ucltip-apt-get --install\n', self.cmdd.install())
 
 class CustomClassTestCase(unittest.TestCase):
 
