@@ -4,95 +4,78 @@ UCLTIP - Use command line tool in Python
 ========================================
 
 This library makes you use command line tool in Python more easier.
-The original idea and most of basic codes are from GitPython project
-`http://pypi.python.org/pypi/GitPython/`
+The original idea are from GitPython project `http://pypi.python.org/pypi/GitPython/`
 
-Basic Usage
------------
+The basic concept is to transform:
+
+1) command as a instance,
+2) command options as arguments or function/method keyword arguments.
+
+Feature:
+
+- Transform CLI Tool arguments to Python function/method arguments
+- Transform CLI Tool Boolean option style to Python function/method keyword arguments
+- Transform CLI Tool Key-Value option style to Python function/method keyword arguments
+- Transform CLI Tool Key-Value option style to Python function/method keyword arguments
+- Transform CLI Command as Python Class and use it in your script
+- Set default options of Command for multiple use
+
+-------
+Example
+-------
 
 ::
 
-	# without options
-	uname = SingleCmd('uname')
-	# result is Linux
-	print uname()
+	>>>expr = ucltip.Cmd('expr')
+	>>>ret = expr(3, '+', 4)
+	>>>ret
+	"7\n"
 
-	# with args
-	expr  = SingleCmd('expr')
-	# result is 10
-	print expr(7, '+', 3)
+create a Cmd callable object
 
-	# with options, the style is '-a - l'
-	# example: ls -a -l
-	ls = SingleCmd('ls')
-	# enable debug mode to see what command string will be executed.
-	# show the debug message like this: DBG: execute cmd 'ls -a -l'
-	ls.__DEBUG__ = True
-	print ls(l=True, a=True)
+::
+	>>>expr = ucltip.Cmd('expr')
 
-	# with boolean options, the style is 'ls --all --almost-all'
-	# variable has '-' should replaced by '_', otherwise syntax error happens
-	print ls(all=True, almost_all=True)
+run Cmd object as a function to get result like executing `expr 3 + 4` in shell,
+the result will be storeged in '''ret''' variable, as the following shows, you can think
+command line tool arguments as Python function arguments.
 
-	# with key-value optons, has 2 different style,
-	# `--key value` or `--key=value`, you can use opt_style variable to control them
-	wget = SingleCmd('wget')
+::
+	>>>ret = expr(3, '+', 4)
 
-	# replacement of wget -o log http://url
-	wget('http://url', o='log')
+if you want to only check what command string will be combined, you can doing dry run,
+but ramind the command string will be split as a list.
 
-	# replacement of wget -o log=http://url
-	wget = SingleCmd('wget', opt_style=1)
-	wget('http://url', o='log')
+::
+	>>>expr = ucltip.Cmd('expr')
+	>>>expr.conf.dry_run = True
+	>>>expr(3, "+", 4)
+	['expr', '3', '+', '4']
 
-	# you can also overwrite the bound command
-	ls.cmdname = 'echo'
-	# the result is
-	# DBG: execute cmd 'echo hi'
-	#'hi\n'
-	print ls("hi")
 
-	# some options is mutiple, which means the name is name, but you can give
-	# many different values, for example
-	# `foo -a -b -o Dir=/var -o Dir::Cache=/tmp`
-	# so you need to use make_optargs to create args if the opt name is duplicate
-	optargs = ucltip.make_optargs('o', ('Dir=/var','Dir::Cache=/tmp'))
-	SingleCmd('foo')(optargs, a=True, b=True)
-
-The command be executed by subprocess.call, it bypass the shell.
+please note that jhe command be executed by subprocess.call, it bypass the shell.
 
 ::
 
 	# the result is $HOME, and it will not show output directly
-	print SingleCmd('echo')("$HOME")
+	print Cmd('echo')("$HOME")
 
 if you want execute command via shell and use shell enviroment variable, please
-do as follow, if args of function includes `via_shell=True`, the command be executed by os.system
+do as follow, if args of function includes '''via_shell=True''', the command be executed by os.system
 
 ::
 
 	# the result is "/home/somebody", and show output directly
-	SingleCmd('echo')("$HOME", via_shell=True)
+	Cmd('echo')("$HOME", via_shell=True)
 
-And here is the replacement if you want to do pipe for mutiple commands
-
-::
-
-        ls = SingleCmd('ls')
-        grep = SingleCmd('grep')
-	# the result is setup.py
-	print grep('setup.py', stdin=ls(a=True, interact=True).stdout))
-
-	#p.s ls(a=True, interact=True) return a Popen instance, so you can have more control
-	#    of that process
-
+-----------------------------------
 Handling Error of command execution
 -----------------------------------
 if the command you want to use is not exists, the exception ucltip.CommandNotFound raises
 
 ::
 
-	>> a=ucltip.SingleCmd('oo')
+	>> a=ucltip.Cmd('oo')
 	Traceback (most recent call last):
 	  File "<stdin>", line 1, in <module>
 	  File "ucltip/__init__.py", line 103, in __init__
@@ -103,9 +86,9 @@ if the command be executed falied, the exception ucltip.CommandExecutedFalur rai
 
 ::
 
-	>>> a=ucltip.SingleCmd('ls')
+	>>> a=ucltip.Cmd('ls')
 	>>> a
-	SingleCmd object bound 'ls'
+	Cmd object bound 'ls'
 	>>> a(ccc=True)
 	Traceback (most recent call last):
 	  File "<stdin>", line 1, in <module>
@@ -123,30 +106,129 @@ here is a example to hanlde error:
 ::
 
 	try:
-		print ucltip.SingleCmd('ls')
+		print ucltip.Cmd('ls')
 	except ucltip.CommandExecutedFalur as e:
 		print e
 
-Command Dispatcher
-------------------
+--------------
+Command Option
+--------------
 
-Some command tools has sub command, like `git`, `zenity`, `pbuilder`, `apt-get`, etc.
-and some commands like `zenity`, they have prefix string in their sub command.
+so far, we already leanr how to execute command with arguments, but how about command options?
+it is pretty easy also, just think command option like python keyword arguments.
+
+''Boolean option''
+
+when the type of keyword arguments's value is boolean, then this kind of keyword arguments
+will be converted to command boolean option, for example, `-a` is equal '''func(a=True)'''
+
+::
+	>>>ls('/tmp', a=True)
+	['ls', '/tmp', '-a']
+
+Key-Value option
+================
+
+when the type of keyword arguments's value is interge number or string, then these of keyword
+arguments will be coverted to command key-value option, for example, '--quoting_style 1' is equal
+'''func(quoting_style=1)'''
+
+::
+	>>>ls('tmp', quoting_style='c')
+	['ls', '--quoting-style', 'c']
+
+also, you can change option style by set '''opt_style''' attribute
+
+::
+	>>>ls.conf.opt_style = 1
+	>>>ls('tmp', quoting_style='c')
+	['ls', '--quoting-style=c']
+
+some options is mutiple, which means the name is name, but you can give
+many different values, for example
+
+::
+	# `foo -a -b -o Dir=/var -o Dir::Cache=/tmp`
+	# so you need to use make_optargs to create args if the opt name is duplicate
+	optargs = ucltip.make_optargs('o', ('Dir=/var','Dir::Cache=/tmp'))
+	Cmd('foo')(optargs, a=True, b=True)
+
+-------------
+CmdDispatcher
+-------------
+
+The CmdDispatcher is an object for mapping some command tools has sub command,
+like `git`, `zenity`, `pbuilder`, `apt-get`, etc.
+
+method name indicates as sub command name, method arguements indicates sub command arguments,
+and method keyword arguments indicates sub command options.
+
+::
+	>>apt_get = ucltip.CmdDispatcher('apt-get')
+	>>apt_get.conf.dry_run = True
+	>>apt_get.install('vim')
+	['apt-get', 'install', 'vim']
+
+if sub command has prefix string, you can use '''subcmd_prefix''' attribute to set it.
 
 ::
 
-	# the sub command name is the method name
-	git = CmdDispatcher('git')
-	git.log()
-	# and you can also give args and options like what SingleCmd can use
-	git.log(raw=True, since='2010')
+	>>zenity = ucltip.CmdDispatcher('zenity')
+	>>zenity.subcmd_prefix = '--'
+	>>zenity.conf.dry_run = True
+	>>zenity.info(text='hello')
+	['zenity', '--info', '--text hello']
 
-	# you can get Popen instance also
-	proc = git.log(interact=True)
+--------------
+Default Option
+--------------
 
-	# zenity has '--' prefix in its sub command, so you need to specify prefix string
-	# and option style
-	zenity = CmdDispatcher('zneity', opt_style=1, subcmd_prefix='--')
+the options does not be stored after you execute command, if you want to keep options
+for multiple using, you can use ''''opts''' function to set default options as the following
 
-	# zneity --info --text=hi
-	zneity.info(text="hi")
+::
+
+	>>>ls = ucltip.Cmd('ls)
+	>>>ls.conf.dry_run=True
+	>>>ls.opts(l=True)
+	>>>ls('/tmp')
+	['ls', '/tmp', '-l']
+
+CmdDispatcher sub command will load default options from its parent, in this case,
+'''apt_get.install.opts()''' is the same as '''apt_get.opts()'''
+
+::
+
+	>>>apt_get = ucltip.CmdDispatcher('apt-get')
+	>>>apt_get.conf.dry_run = True
+	>>>apt_get.opts(t='maverick')
+	>>>apt_get.install.opts()
+	{t':'maverick'}
+	>>>apt_get.install('vim')
+	apt-get', 'install', 'vim', '-t maverick']
+	>>>apt_get.opts(t=False)
+	>>>apt_get.install('vim')
+	['apt-get', 'install', 'vim']
+
+Helper
+======
+
+regcmds is used to register multiple command in built-in environment one time
+
+::
+
+	>>>ucltip.regcmds('ls', 'wget', 'sed')
+	>>> ls
+	Cmd object bound 'ls'
+	>>> wget
+	Cmd object bound 'wget'
+	>>> sed
+	Cmd object bound 'sed'
+
+::
+
+	>>>ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
+	>>> apt_get
+	<ucltip.CmdDispatcher object at 0xb7305dcc>
+	>>> apt_cache
+	<ucltip.CmdDispatcher object at 0xb7308bec>
