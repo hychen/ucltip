@@ -209,3 +209,26 @@ CmdDispatcher sub command will load default options from its parent, in this cas
 	>>>apt_get.opts(t=False)
 	>>>apt_get.install('vim')
 	['apt-get', 'install', 'vim']
+
+Helper
+======
+
+regcmds is used to register multiple command in built-in environment one time
+
+::
+
+	>>>ucltip.regcmds('ls', 'wget', 'sed')
+	>>> ls
+	Cmd object bound 'ls'
+	>>> wget
+	Cmd object bound 'wget'
+	>>> sed
+	Cmd object bound 'sed'
+
+::
+
+	>>>ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
+	>>> apt_get
+	<ucltip.CmdDispatcher object at 0xb7305dcc>
+	>>> apt_cache
+	<ucltip.CmdDispatcher object at 0xb7308bec>
