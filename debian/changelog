@@ -1,3 +1,9 @@
+python-ucltip (0.5rc1-0hychen1) natty; urgency=low
+
+  * snashop of 0.5rc1
+
+ -- Hsin-Yi Chen (hychen) <hychen@canonical.com>  Sun, 19 Jun 2011 11:31:52 +0800
+
 python-ucltip (0.4.5-1ppa1) natty; urgency=low
 
   * branch 0.4.5-1 to natty
