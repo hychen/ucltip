@@ -49,7 +49,7 @@ __all__ = ['regcmds',
            'SubCmd',
            'CmdDispatcher',
            'CommandNotFound',
-           'CommandExecutedFalur',
+           'CommandExecutedError',
            'RequireParentCmd']
 
 import subprocess
@@ -158,7 +158,7 @@ def make_optargs(optname, values, opt_style=0):
 class CommandNotFound(Exception):
     pass
 
-class CommandExecutedFalur(Exception):
+class CommandExecutedError(Exception):
 
     def __init__(self, status, errmsg=None):
         self.status = status
@@ -258,7 +258,7 @@ class ExecutableCmd(BaseCmd):
         if via_shell:
             status = os.system(' '.join(command))
             if status != 0:
-                raise CommandExecutedFalur(status)
+                raise CommandExecutedError(status)
             return status
         else:
             # Start the process
@@ -282,7 +282,7 @@ class ExecutableCmd(BaseCmd):
 
             if not with_extend_output:
                 if status != 0:
-                    raise CommandExecutedFalur(status, stderr_value)
+                    raise CommandExecutedError(status, stderr_value)
                 return stdout_value
             else:
                 return (status, stdout_value)

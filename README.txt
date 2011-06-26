@@ -82,7 +82,7 @@ if the command you want to use is not exists, the exception ucltip.CommandNotFou
 	    raise CommandNotFound()
 	ucltip.CommandNotFound
 
-if the command be executed falied, the exception ucltip.CommandExecutedFalur raises
+if the command be executed falied, the exception ucltip.CommandExecutedError raises
 
 ::
 
@@ -97,8 +97,8 @@ if the command be executed falied, the exception ucltip.CommandExecutedFalur rai
 	  File "ucltip/__init__.py", line 126, in _callProcess
 	    return self.execute(call, **_kwargs)
 	  File "ucltip/__init__.py", line 169, in execute
-	    raise CommandExecutedFalur(status, stderr_value)
-	ucltip.CommandExecutedFalur: ls: unrecognized option '--ccc'
+	    raise CommandExecutedError(status, stderr_value)
+	ucltip.CommandExecutedError: ls: unrecognized option '--ccc'
 	Try `ls --help' for more information.
 
 here is a example to hanlde error:
@@ -107,7 +107,7 @@ here is a example to hanlde error:
 
 	try:
 		print ucltip.Cmd('ls')
-	except ucltip.CommandExecutedFalur as e:
+	except ucltip.CommandExecutedError as e:
 		print e
 
 --------------

@@ -80,7 +80,7 @@ class ExecuteCmdTestCase(unittest.TestCase):
 
     def test_call(self):
         self.assertEquals(self.expr('3', '+', '4'), '7\n')
-        self.assertRaises(ucltip.CommandExecutedFalur, self.expr, '3', '5', '4')
+        self.assertRaises(ucltip.CommandExecutedError, self.expr, '3', '5', '4')
         self.assertEquals(self.expr('3', '+', '4', via_shell=True), 0)
 
     def test_pipe(self):
