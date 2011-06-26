@@ -369,3 +369,6 @@ class CmdDispatcher(BaseCmd):
         if name[:1] == '_':
             raise AttributeError(name)
         return self._subcmds.setdefault(name, SubCmd(name, self))
+
+    def __repr__(self):
+        return "{0} object bound '{1}'".format(self.__class__.__name__, self.name)
