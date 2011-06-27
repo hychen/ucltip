@@ -27,12 +27,24 @@ def setup_testenv():
 
 class UtilsTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.optcreator = ucltip.OptionCreator()
+
     def test_kwargsname_to_optionname(self):
         """test transform keyword arguments's name to command's option name.
         """
-        self.assertEquals(ucltip.optname('k'), '-k')
-        self.assertEquals(ucltip.optname('key'), '--key')
-        self.assertEquals(ucltip.optname('key_one'), '--key-one')
+        # POSIX and GNU Style
+        for style in ('posix', 'gnu', 'POSIX', 'GNU'):
+            self.optcreator.set_opt_style(style)
+            self.assertEquals(self.optcreator.optname('k'), '-k')
+            self.assertEquals(self.optcreator.optname('key'), '--key')
+            self.assertEquals(self.optcreator.optname('key_one'), '--key-one')
+
+        # Java Style
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.optname('k'), '-k')
+        self.assertEquals(self.optcreator.optname('key'), '-key')
+        self.assertEquals(self.optcreator.optname('key_one'), '-key-one')
 
     def test_transform_kwargs_to_booloption(self):
         """test transform keyword to command's boolean style option.
@@ -42,21 +54,43 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEquals(ucltip.transform_kwargs(0, key=True), ['--key'])
         self.assertEquals(ucltip.transform_kwargs(1, key=True), ['--key'])
 
+    def test_transform_kwargs_to_booloption2(self):
+        """test transform keyword to command's boolean style option.
+        """
+        # POSIX and GNU
+        for style in ('posix', 'gnu'):
+            self.optcreator.set_opt_style(style)
+            self.assertEquals(self.optcreator.transform_kwargs(k=True), ['-k'])
+            self.assertEquals(self.optcreator.transform_kwargs(key=True), ['--key'])
+
+        # Java Style
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.transform_kwargs(key=True), ['-key'])
+
     def test_transform_kwargs_to_keyvauleoption(self):
         """test transform keyword to command's key-value style option name.
         """
-        self.assertEquals(ucltip.transform_kwargs(0, k=123), ['-k', '123'])
-        self.assertEquals(ucltip.transform_kwargs(1, k=123), ['-k=123'])
-        self.assertEquals(ucltip.transform_kwargs(0, key=123), ['--key', '123'])
-        self.assertEquals(ucltip.transform_kwargs(1, key=123), ['--key=123'])
+        self.optcreator.set_opt_style('posix')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k', '123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['--key', '123'])
+
+        self.optcreator.set_opt_style('gnu')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k=123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['--key=123'])
+
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k=123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['-key=123'])
 
     def test_make_multi_options(self):
         """test make multi option string with the same option name
         """
-        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 0),
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'posix'),
                           ['--colum','first', '--colum', 'second'])
-        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 1),
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'gnu'),
                           ['--colum=first','--colum=second'])
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'java'),
+                          ['-colum=first','-colum=second'])
 
     def test_cmdexist(self):
         """check commands exists """
