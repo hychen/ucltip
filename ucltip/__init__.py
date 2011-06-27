@@ -33,7 +33,7 @@ and the following is a simple usage example that launching a Zenity info dialog 
 
     zenity = ucltip.CmdDispatcher('zenity')
     zenity.subcmd_prefix = '--'
-    zenity.opt_style = 1
+    zenity.conf.opt_style = 'gnu'
     zenity.info(text="The first example", width=500)
 
 The module contains the following public classes:
@@ -106,40 +106,81 @@ def cmdexists(cmdname):
 # =====================
 # Options and Arguments
 # =====================
-def transform_kwargs(opt_style, **kwargs):
+class OptionCreator(object):
+    """Object for creating command options string from Python
+       keyword arguments
+
+    Support options style:
+
+    - POSIX like options (ie. tar -zxvf foo.tar.gz)
+    - GNU like long options (ie. du --human-readable --max-depth=1)
+    - Java like properties (ie. java -Djava.awt.headless=true -Djava.net.useSystemProxies=true Foo)
+
+    Unsupport options style:
+
+    - Short options with value attached (ie. gcc -O2 foo.c)
+    - long options with single hyphen (ie. ant -projecthelp)
+
     """
-    Transforms Python style kwargs into command line options.
 
-    @param int opt_style
-    @return list args
-    """
-    args = []
-    for k, v in kwargs.items():
-        __append_opt(args, k, v, opt_style)
-    return args
+    """Support Option Styles, posix is default"""
+    VALIDE_OPTSTYLES = ('posix', 'gnu', 'java')
 
-def __append_opt(args, k, v, opt_style):
-    """append option value transformed from kwargs to inputed args list
+    def __init__(self, opt_style='posix'):
+        self._result = []
+        self.set_opt_style(opt_style)
 
-    @param str k option name
-    @param str v option value
-    @param int option style
-    """
-    if type(v) is not bool:
-        v=str(v)
-        if opt_style:
-            args.append('{0}={1}'.format(optname(k),v))
-        else:
-            args.append(optname(k))
-            args.append(v)
-    elif v == True:
-        args.append(optname(k))
+    def set_opt_style(self, opt_style):
+        self.opt_style = str(opt_style).lower()
+        if not self.opt_style in self.VALIDE_OPTSTYLES:
+            raise NotValideOptStyle(opt_style)
 
-def optname(k):
-    """get option name"""
-    return len(k) == 1 and '-{0}'.format(k) or '--{0}'.format(dashify(k))
+    def make_optargs(self, optname, values):
+        """create command line options, same key but different values
 
-def make_optargs(optname, values, opt_style=0):
+        @param str optname
+        @param list values
+        @return list combined option args
+        """
+        self._result = []
+        for v in values:
+            self.__append_opt(optname, v)
+        return self._result
+
+    def transform_kwargs(self, **kwargs):
+        """
+        Transforms Python style kwargs into command line options.
+
+        @return list args for subprocess.call
+        """
+        self._result = []
+        for k, v in kwargs.items():
+            self.__append_opt(k, v)
+        return self._result
+
+    def __append_opt(self, k, v):
+        """append option value transformed from kwargs to inputed args list
+
+        @param str k option name
+        @param str v option value
+        """
+        if type(v) is not bool:
+            v=str(v)
+            if self.opt_style in ('gnu', 'java'):
+                self._result.append('{0}={1}'.format(self.optname(k),v))
+            else:
+                self._result.append(self.optname(k))
+                self._result.append(v)
+        elif v == True:
+            self._result.append(self.optname(k))
+
+    def optname(self, k):
+        """get option name"""
+        return (len(k) == 1 or self.opt_style == 'java') and \
+               '-{0}'.format(dashify(k)) or \
+               '--{0}'.format(dashify(k))
+
+def make_optargs(optname, values, opt_style='posix'):
     """create command line options, same key but different values
 
     @param str optname
@@ -147,10 +188,7 @@ def make_optargs(optname, values, opt_style=0):
     @param int option style
     @return list combined option args
     """
-    ret = []
-    for v in values:
-        __append_opt(ret, optname, v, opt_style)
-    return ret
+    return OptionCreator(opt_style).make_optargs(optname, values)
 
 # =====================
 # Exceptions Clasees
@@ -170,6 +208,13 @@ class CommandExecutedError(Exception):
 class RequireParentCmd(Exception):
     pass
 
+class NotValideOptStyle(Exception):
+    def __init__(self, opt_style):
+        self.opt_style = opt_style
+
+    def __str__(self):
+        return self.opt_style
+
 # =======================
 # Command Adpater Classes
 # =======================
@@ -180,7 +225,7 @@ class CmdConfiguration(object):
         self.dry_run = False
         self.debug = False
         self.default_opts = {}
-        self.opt_style = 0
+        self.opt_style = 'posix'
 
 class BaseCmd(object):
 
@@ -289,13 +334,13 @@ class ExecutableCmd(BaseCmd):
 
     def make_callargs(self, *args, **kwargs):
         # Prepare the argument list
-        opt_args = transform_kwargs(self.conf.opt_style, **kwargs)
+        opt_args = OptionCreator(self.conf.opt_style).transform_kwargs(**kwargs)
         ext_args = map(str, args)
         args = ext_args + opt_args
         return [self.name] + args
 
     def __repr__(self):
-        opt = self.opts() and ' ' + " ".join(transform_kwargs(self.conf.opt_style, **self.opts())) or ''
+        opt = self.opts() and ' ' + " ".join(OptionCreator(self.conf.opt_style).transform_kwargs(**self.opts())) or ''
         return "{0} object bound '{1}{2}'".format(self.__class__.__name__, self.name, opt)
 
 class Cmd(ExecutableCmd):
@@ -303,9 +348,8 @@ class Cmd(ExecutableCmd):
 
     Keyword Arguments:
         - name -- A string indicating the command name will be executed
-        - opt_style - A interger number indicating the option style, if
-           the vaule is 1, then the option string will be --$opt=$value,
-           otherwise the option string is --$opt $value
+        - opt_style -- A string to indicate what options style be used , avaliable values
+                      are `posix`, `gnu`, `java`, the default is posix
     """
 
     def __init__(self, name=None):
@@ -354,9 +398,8 @@ class CmdDispatcher(BaseCmd):
     Keyword Arguments:
         - name -- A string indicating the sub command name will be executed
         - subcmd_prefix -- A string indicating prefix string of a sub command if required
-        - opt_style - A interger number indicating the option style, if
-           the vaule is 1, then the option string will be --$opt=$value,
-           otherwise the option string is --$opt $value
+        - opt_style - A string to indicate what options style be used , avaliable values are
+          `posix`, `gnu`, `java`, the default is posix
     """
     def __init__(self, name=None):
         self.subcmd_prefix = None
