@@ -33,7 +33,7 @@ and the following is a simple usage example that launching a Zenity info dialog 
 
     zenity = ucltip.CmdDispatcher('zenity')
     zenity.subcmd_prefix = '--'
-    zenity.opt_style = 1
+    zenity.conf.opt_style = 'gnu'
     zenity.info(text="The first example", width=500)
 
 The module contains the following public classes:
@@ -133,7 +133,6 @@ class OptionCreator(object):
     def set_opt_style(self, opt_style):
         self.opt_style = str(opt_style).lower()
         if not self.opt_style in self.VALIDE_OPTSTYLES:
-            #@TODO
             raise NotValideOptStyle(opt_style)
 
     def make_optargs(self, optname, values):
@@ -349,9 +348,8 @@ class Cmd(ExecutableCmd):
 
     Keyword Arguments:
         - name -- A string indicating the command name will be executed
-        - opt_style - A interger number indicating the option style, if
-           the vaule is 1, then the option string will be --$opt=$value,
-           otherwise the option string is --$opt $value
+        - opt_style -- A string to indicate what options style be used , avaliable values
+                      are `posix`, `gnu`, `java`, the default is posix
     """
 
     def __init__(self, name=None):
@@ -400,9 +398,8 @@ class CmdDispatcher(BaseCmd):
     Keyword Arguments:
         - name -- A string indicating the sub command name will be executed
         - subcmd_prefix -- A string indicating prefix string of a sub command if required
-        - opt_style - A interger number indicating the option style, if
-           the vaule is 1, then the option string will be --$opt=$value,
-           otherwise the option string is --$opt $value
+        - opt_style - A string to indicate what options style be used , avaliable values are
+          `posix`, `gnu`, `java`, the default is posix
     """
     def __init__(self, name=None):
         self.subcmd_prefix = None

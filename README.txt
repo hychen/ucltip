@@ -137,10 +137,11 @@ arguments will be coverted to command key-value option, for example, '--quoting_
 	>>>ls('tmp', quoting_style='c')
 	['ls', '--quoting-style', 'c']
 
-also, you can change option style by set '''opt_style''' attribute
+also, you can change option style by set '''opt_style''' attribute, support option style are `gnu`,
+`posix`,`java`, the default value is `posix`
 
 ::
-	>>>ls.conf.opt_style = 1
+	>>>ls.conf.opt_style = 'gnu'
 	>>>ls('tmp', quoting_style='c')
 	['ls', '--quoting-style=c']
 

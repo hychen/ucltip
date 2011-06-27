@@ -181,15 +181,23 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get --install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
 
     def test_opts(self):
-        """test option of cmd dispatcher"""
+        """test setting default options of cmd dispatcher"""
         self.cmdd.opts(def_opt=1)
         self.assertEquals('ucltip-apt-get install vim --def-opt 1 -t maverick\n', self.cmdd.install('vim', t='maverick'))
         self.cmdd.opts(def_opt=False)
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
 
     def test_subcmd_prefix(self):
+        """test setting subcmd_prefix of cmd dispatcher"""
         self.cmdd.subcmd_prefix = '--'
         self.assertEquals('ucltip-apt-get --install\n', self.cmdd.install())
+
+    def test_opt_style(self):
+        """test setting option style of cmd dispatcher"""
+        self.cmdd.conf.opt_style = 'gnu'
+        self.assertEquals('ucltip-apt-get install --test=1\n', self.cmdd.install(test=1))
+        self.cmdd.conf.opt_style = 'java'
+        self.assertEquals('ucltip-apt-get install -test=1\n', self.cmdd.install(test=1))
 
 class CustomClassTestCase(unittest.TestCase):
 
