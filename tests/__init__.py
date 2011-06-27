@@ -49,14 +49,6 @@ class UtilsTestCase(unittest.TestCase):
     def test_transform_kwargs_to_booloption(self):
         """test transform keyword to command's boolean style option.
         """
-        self.assertEquals(ucltip.transform_kwargs(0, k=True), ['-k'])
-        self.assertEquals(ucltip.transform_kwargs(1, k=True), ['-k'])
-        self.assertEquals(ucltip.transform_kwargs(0, key=True), ['--key'])
-        self.assertEquals(ucltip.transform_kwargs(1, key=True), ['--key'])
-
-    def test_transform_kwargs_to_booloption2(self):
-        """test transform keyword to command's boolean style option.
-        """
         # POSIX and GNU
         for style in ('posix', 'gnu'):
             self.optcreator.set_opt_style(style)
@@ -91,6 +83,9 @@ class UtilsTestCase(unittest.TestCase):
                           ['--colum=first','--colum=second'])
         self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'java'),
                           ['-colum=first','-colum=second'])
+        # exception check
+        self.assertRaises(ucltip.NotValideOptStyle, ucltip.make_optargs, 'colum', ('first','second'), 0)
+        self.assertRaises(ucltip.NotValideOptStyle, ucltip.make_optargs, 'colum', ('first','second'), 1)
 
     def test_cmdexist(self):
         """check commands exists """
@@ -158,7 +153,7 @@ class SubCmdTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.psubcmd('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.psubcmd('vim', test='maverick'))
         # check another option style
-        self.parent.opt_style = 1
+        self.parent.opt_style = 'gnu'
         self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.psubcmd('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.psubcmd('vim', test='maverick'))
 
@@ -178,7 +173,7 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.cmdd.install('vim', test='maverick'))
         # check another option style
-        self.cmdd.opt_style = 1
+        self.cmdd.opt_style = 'gnu'
         self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.cmdd.install('vim', test='maverick'))
         # check another sub command prefix

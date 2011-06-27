@@ -126,16 +126,15 @@ class OptionCreator(object):
     """Support Option Styles, posix is default"""
     VALIDE_OPTSTYLES = ('posix', 'gnu', 'java')
 
-    def __init__(self, opt_style=None):
+    def __init__(self, opt_style='posix'):
         self._result = []
         self.set_opt_style(opt_style)
 
     def set_opt_style(self, opt_style):
-        self.opt_style = opt_style and opt_style.lower() or 'posix'
+        self.opt_style = str(opt_style).lower()
         if not self.opt_style in self.VALIDE_OPTSTYLES:
             #@TODO
-            raise Exception()
-        return True
+            raise NotValideOptStyle(opt_style)
 
     def make_optargs(self, optname, values):
         """create command line options, same key but different values
@@ -182,39 +181,6 @@ class OptionCreator(object):
                '-{0}'.format(dashify(k)) or \
                '--{0}'.format(dashify(k))
 
-def transform_kwargs(opt_style, **kwargs):
-    """
-    Transforms Python style kwargs into command line options.
-
-    @param int opt_style
-    @return list args
-    """
-    args = []
-    for k, v in kwargs.items():
-        __append_opt(args, k, v, opt_style)
-    return args
-
-def __append_opt(args, k, v, opt_style):
-    """append option value transformed from kwargs to inputed args list
-
-    @param str k option name
-    @param str v option value
-    @param int option style
-    """
-    if type(v) is not bool:
-        v=str(v)
-        if opt_style:
-            args.append('{0}={1}'.format(optname(k),v))
-        else:
-            args.append(optname(k))
-            args.append(v)
-    elif v == True:
-        args.append(optname(k))
-
-def optname(k):
-    """get option name"""
-    return len(k) == 1 and '-{0}'.format(k) or '--{0}'.format(dashify(k))
-
 def make_optargs(optname, values, opt_style='posix'):
     """create command line options, same key but different values
 
@@ -243,6 +209,13 @@ class CommandExecutedError(Exception):
 class RequireParentCmd(Exception):
     pass
 
+class NotValideOptStyle(Exception):
+    def __init__(self, opt_style):
+        self.opt_style = opt_style
+
+    def __str__(self):
+        return self.opt_style
+
 # =======================
 # Command Adpater Classes
 # =======================
@@ -253,7 +226,7 @@ class CmdConfiguration(object):
         self.dry_run = False
         self.debug = False
         self.default_opts = {}
-        self.opt_style = 0
+        self.opt_style = 'posix'
 
 class BaseCmd(object):
 
@@ -362,13 +335,13 @@ class ExecutableCmd(BaseCmd):
 
     def make_callargs(self, *args, **kwargs):
         # Prepare the argument list
-        opt_args = transform_kwargs(self.conf.opt_style, **kwargs)
+        opt_args = OptionCreator(self.conf.opt_style).transform_kwargs(**kwargs)
         ext_args = map(str, args)
         args = ext_args + opt_args
         return [self.name] + args
 
     def __repr__(self):
-        opt = self.opts() and ' ' + " ".join(transform_kwargs(self.conf.opt_style, **self.opts())) or ''
+        opt = self.opts() and ' ' + " ".join(OptionCreator(self.conf.opt_style).transform_kwargs(**self.opts())) or ''
         return "{0} object bound '{1}{2}'".format(self.__class__.__name__, self.name, opt)
 
 class Cmd(ExecutableCmd):
