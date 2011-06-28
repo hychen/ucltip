@@ -1,3 +1,21 @@
+python-ucltip (0.5-1) unstable; urgency=low
+
+  * 0.5-1 released
+    * New features:
+           * create a combined command string for testing
+           * setting default command options
+    * New Class: CmdConfiguration, SubCmd
+    * Rename Function: reg_singlecmds -> regcmds
+    * Rename Class: SingleCmd -> Cmd
+    * Change copyright year 2010 to 2011
+    * New Test: ExecutedCmd, UtilsTestCase, SubCmdTestCase,
+                CmdDispatcherTestCase, CustomClassTestCase,
+                HelperTestCase
+    * Upadte Readme.txt
+    * Update comments
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Tue, 28 Jun 2011 19:13:40 +0800
+
 python-ucltip (0.4.5-1) unstable; urgency=low
 
   * 0.4.5-1 released
