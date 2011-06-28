@@ -102,6 +102,8 @@ class OptionCreator(object):
     - GNU like long options (ie. du --human-readable --max-depth=1)
     - Java like properties (ie. java -Djava.awt.headless=true -Djava.net.useSystemProxies=true Foo)
 
+        p.s Java like is not fully supported.
+
     Unsupport options style:
 
     - Short options with value attached (ie. gcc -O2 foo.c)

@@ -138,7 +138,9 @@ arguments will be coverted to command key-value option, for example, '--quoting_
 	['ls', '--quoting-style', 'c']
 
 also, you can change option style by set '''opt_style''' attribute, support option style are `gnu`,
-`posix`,`java`, the default value is `posix`
+`posix`,`java`, the default value is `posix`.
+
+note: java option style is not fully supported.
 
 ::
 	>>>ls.conf.opt_style = 'gnu'
