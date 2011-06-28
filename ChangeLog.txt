@@ -1,0 +1,14 @@
+2011-06-28 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.5
+
+	* New features:
+		* create a combined command string for testing
+		* setting default command options
+	* New Class: CmdConfiguration, SubCmd
+	* Rename Function: reg_singlecmds -> regcmds
+	* Rename Class: SingleCmd -> Cmd
+	* Change copyright year 2010 to 2011
+	* New Test: ExecutedCmd, UtilsTestCase, SubCmdTestCase,
+		    CmdDispatcherTestCase, CustomClassTestCase,
+		    HelperTestCase
+	* Upadte Readme.txt
+	* Update comments
