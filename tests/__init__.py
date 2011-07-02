@@ -200,10 +200,17 @@ class CustomClassTestCase(unittest.TestCase):
                 self.conf.opt_style = 'gnu'
                 self.conf.dry_run = True
 
+                self.error = lambda *args, **kwargs:    self.call('error', *args, **kwargs)
+
             def info(self, *args, **kwargs):
                 kwargs['text']='hi'
                 return self.getsubcmd('info')(*args, **kwargs)
+
+            def call(self, name, *args, **kwargs):
+                return args, kwargs
+
         self.assertEquals(['zenity', '--info', '--text=hi'], Zenity().info())
+        self.assertEquals(((1,2,3), {'a':1}), Zenity().error(1,2,3, a=1))
 
 class HelperTestCase(unittest.TestCase):
 
