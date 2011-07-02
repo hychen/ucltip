@@ -192,6 +192,19 @@ class CustomClassTestCase(unittest.TestCase):
             pass
         self.assertEquals(LS().name, 'ls')
 
+    def test_cmdd(self):
+        class Zenity(ucltip.CmdDispatcher):
+            def __init__(self):
+                super(Zenity, self).__init__()
+                self.subcmd_prefix = '--'
+                self.conf.opt_style = 'gnu'
+                self.conf.dry_run = True
+
+            def info(self, *args, **kwargs):
+                kwargs['text']='hi'
+                return self.getsubcmd('info')(*args, **kwargs)
+        self.assertEquals(['zenity', '--info', '--text=hi'], Zenity().info())
+
 class HelperTestCase(unittest.TestCase):
 
     def test_call(self):

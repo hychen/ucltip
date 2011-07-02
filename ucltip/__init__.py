@@ -392,13 +392,16 @@ class CmdDispatcher(BaseCmd):
     def __init__(self, name=None):
         self.subcmd_prefix = None
         self._subcmds = {}
-        BaseCmd.__init__(self, name)
-        if not cmdexists(name):
+        super(CmdDispatcher, self).__init__(name)
+        if not cmdexists(self.name):
             raise CommandNotFound
 
     def __getattr__(self, name):
         if name[:1] == '_':
             raise AttributeError(name)
+        return self.getsubcmd(name)
+
+    def getsubcmd(self, name):
         return self._subcmds.setdefault(name, SubCmd(name, self))
 
     def __repr__(self):
