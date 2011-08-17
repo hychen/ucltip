@@ -13,7 +13,7 @@ This module is a command-line adapter library that:
 Here is a example that execute `ls -al` in current directory
 
     ls = ucltip.Cmd('ls')
-    ls(al=True)
+    ls(l=True)
 
 and the following is a simple usage example that launching a Zenity info dialog in Python
 
