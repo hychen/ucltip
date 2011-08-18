@@ -247,7 +247,7 @@ class BaseCmd(object):
 
 class ExecutableCmd(BaseCmd):
 
-    execute_kwargs = ('stdin','interact', 'via_shell', 'with_extend_output')
+    execute_kwargs = ('stdin','as_process', 'via_shell', 'with_extend_output')
 
     def __call__(self, *args, **kwargs):
         return self._callProcess(*args, **kwargs)
@@ -269,22 +269,22 @@ class ExecutableCmd(BaseCmd):
         call = self.make_callargs(*args, **kwargs)
         return self.conf.dry_run and call or self.execute(call, **_kwargs)
 
-    def execute(self, command, stdin=None, interact=False, via_shell=False, with_extend_output=False):
+    def execute(self, command, stdin=None, as_process=False, via_shell=False, with_extend_output=False):
         """execute command
 
         @param subprocess.PIPE stdin
-        @param bool interact retrun Popen instance if interact is True for
+        @param bool as_process retrun Popen instance if as_process is True for
                more control
         @param bool via_shell use os.system instead of subprocess.call
-        @return str execited result (interact musc be False)
+        @return str execited result (as_process musc be False)
 
         @example
             # the same as echo `ls -al|grep Dox`
             ls = ucltip.Cmd('ls')
             grep = ucltip.Cmd('grep')
-            print grep('Dox', stdin=ls(a=True, l=True, interact=True).stdout)
+            print grep('Dox', stdin=ls(a=True, l=True, as_process=True).stdout)
         """
-        assert not (interact and via_shell),\
+        assert not (as_process and via_shell),\
             "You can not get a Popen instance when you want to execute command in shell."
         assert not (stdin and via_shell),\
             "You can not use stdin and via_shell in the same time."
@@ -301,7 +301,7 @@ class ExecutableCmd(BaseCmd):
                                     stdout=subprocess.PIPE,
                                     **extra
                                     )
-            if interact:
+            if as_process:
                 return proc
 
             # Wait for the process to return
@@ -431,7 +431,7 @@ class Pipe(object):
         if type(cmd) is str and not opts:
             cmd = Cmd(cmd)
 
-        opts['interact'] = True
+        opts['as_process'] = True
         if self._last_proc:
             opts['stdin'] = self._last_proc.stdout
         self._last_proc =  cmd(*args, **opts)

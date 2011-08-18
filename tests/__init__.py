@@ -100,7 +100,7 @@ class ExecuteCmdTestCase(unittest.TestCase):
 
     def test_pipe(self):
         """test command pipe line"""
-        first_cmd = self.expr('3','+','4', interact=True)
+        first_cmd = self.expr('3','+','4', as_process=True)
         second_cmd = self.sed
         self.assertEquals('A\n', second_cmd('s/7/A/', stdin=first_cmd.stdout))
 
