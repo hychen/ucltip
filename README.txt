@@ -213,6 +213,63 @@ CmdDispatcher sub command will load default options from its parent, in this cas
 	>>>apt_get.install('vim')
 	['apt-get', 'install', 'vim']
 
+Pipe
+====
+In subprocess, the way for doing pipeline is
+
+::
+
+	>>>p1 = Popen(["dmesg"], stdout=PIPE)
+	>>>p2 = Popen(["grep", "hda"], stdin=p1.stdout, stdout=PIPE)
+	>>>output = p2.communicate()[0]
+
+which is not convenience when you want to pipe many commands.
+
+Pipe class provide similar interface as C library `libpipeline` (http://libpipeline.nongnu.org/)
+that manipulating pipelines of subprocesses in a flexible and convenient way in C.
+
+firstly, you need to create a Pipe instance
+
+::
+	>>>pipe = ucltip.Pipe()
+
+and then add some command arguments as you want
+
+::
+
+	>>>pipe.add('expr', 1, '+' 3)
+	>>>pipe.add('sed', 's/4/5/', '--posix')
+
+finally run the process, wait it terminate and get its output
+
+::
+
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+	5
+	# get error message in case command executed error
+	>>>pipe.stderr.read()
+
+the first argument of Pipe.add function can be Cmd or SubCmd,
+please remaind the usage of add function is changed in this case
+
+::
+	>>>pipe = ucltip.Pipe()
+	>>>pipe.add(Cmd('expr'), 1, '+', 3)
+	>>>pipe.add(Cmd('sed'), 's/4/5', posix=True)
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+	5
+
+::
+
+	>>>apt_cache = ucltip.CmdDispatcher('apt-cache')
+	>>>pipe = ucltip.Pipe()
+	>>>pipe.add(apt_cache.search, 'vim-common')
+	>>>pipe.add(Cmd('grep'), 'vim')
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+
 Helper
 ======
 
