@@ -212,6 +212,35 @@ class CustomClassTestCase(unittest.TestCase):
         self.assertEquals(['zenity', '--info', '--text=hi'], Zenity().info())
         self.assertEquals(((1,2,3), {'a':1}), Zenity().error(1,2,3, a=1))
 
+class PipeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.pipe = ucltip.Pipe()
+
+    def tearDown(self):
+        del self.pipe
+
+    def test_cmd_obj_param(self):
+        self.pipe.add(ucltip.Cmd('expr'), 1, '+', 3)
+        self.pipe.add(ucltip.Cmd('sed'), 's/4/8/', posix=True)
+        self.pipe.wait()
+        self.assertEquals('8\n', self.pipe.stdout.read())
+
+    def test_cmdd_obj_param(self):
+        self.pipe.add(ucltip.CmdDispatcher('apt-cache').search, 'vim-common', q=True)
+        self.pipe.add(ucltip.Cmd('awk'), '{ print $1 }')
+        self.pipe.wait()
+        self.assertEquals('vim-common\n', self.pipe.stdout.read())
+
+    def test_cmd_str_param(self):
+        self.pipe.add('expr', 1, '+', 3)
+        self.pipe.add('sed', 's/4/8/', '--posix')
+        self.pipe.wait()
+        self.assertEquals('8\n', self.pipe.stdout.read())
+
+    def test_exception(self):
+        self.assertRaises(ucltip.PipeError, self.pipe.wait)
+
 class HelperTestCase(unittest.TestCase):
 
     def test_call(self):
@@ -230,6 +259,7 @@ def suite():
     suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CmdDispatcherTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(PipeTestCase, 'test'))
     suite.addTest(unittest.makeSuite(HelperTestCase, 'test'))
     return suite
 
