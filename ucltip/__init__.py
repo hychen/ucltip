@@ -406,3 +406,49 @@ class CmdDispatcher(BaseCmd):
 
     def __repr__(self):
         return "{0} object bound '{1}'".format(self.__class__.__name__, self.name)
+
+# ============
+# Pipe Classes
+# ============
+class PipeError(Exception):
+    pass
+
+class Pipe(object):
+    """Object for handling command pipeline
+    """
+
+    def __init__(self):
+        # last process
+        self._last_proc = None
+
+    def add(self, cmd, *args, **opts):
+        """add command arguments in this pipe
+
+        @param cmd command name
+        @param args command arguments
+        @param opts command options
+        """
+        if type(cmd) is str and not opts:
+            cmd = Cmd(cmd)
+
+        opts['interact'] = True
+        if self._last_proc:
+            opts['stdin'] = self._last_proc.stdout
+        self._last_proc =  cmd(*args, **opts)
+
+    def wait(self):
+        """Wait for the process to terminate.  Returns returncode attribute.
+        """
+        if not self._last_proc:
+            raise PipeError("theres is no any process inside")
+        status = self._last_proc.wait()
+        if status != 0:
+            raise PipeError()
+        return status
+
+    def __getattr__(self, k):
+        if self._last_proc and k in ('status', 'stdout', 'stderr'):
+            try:
+                return getattr(self._last_proc, k)
+            except AttributeError:
+                return None
