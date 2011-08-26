@@ -36,7 +36,8 @@ __all__ = ['regcmds',
            'CmdDispatcher',
            'CommandNotFound',
            'CommandExecutedError',
-           'RequireParentCmd']
+           'RequireParentCmd',
+           'Pipe']
 
 import subprocess
 import sys
