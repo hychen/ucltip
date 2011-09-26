@@ -292,3 +292,8 @@ regcmds is used to register multiple command in built-in environment one time
 	<ucltip.CmdDispatcher object at 0xb7305dcc>
 	>>> apt_cache
 	<ucltip.CmdDispatcher object at 0xb7308bec>
+
+Debugging
+=========
+
+ucltip provid debug output in /var/log/syslog after your set `__DEBUG` to True
