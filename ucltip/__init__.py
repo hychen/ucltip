@@ -37,15 +37,30 @@ __all__ = ['regcmds',
            'CommandNotFound',
            'CommandExecutedError',
            'RequireParentCmd',
-           'Pipe']
+           'Pipe',
+           '__DEBUG__']
 
 import subprocess
+import syslog
 import sys
 import os
 
 extra = {}
 if sys.platform == 'win32':
     extra = {'shell': True}
+
+__DEBUG__ = False
+
+# =====================
+# Logging functions
+# =====================
+def ERR(cmdstr, errmsg='None'):
+    syslog.syslog(syslog.LOG_ERR,
+           'UCLTIP: Executed "{}" failed, Err Msg:{}'.format(cmdstr, errmsg))
+
+def DBG(msg):
+    if __DEBUG__:
+        syslog.syslog(syslog.LOG_DEBUG, 'UCLTIP: {} '.format(msg))
 
 # =============================
 # Utility functions and classes
@@ -145,6 +160,8 @@ class OptionCreator(object):
         self._result = []
         for k, v in kwargs.items():
             self.__append_opt(k, v)
+        DBG('Trasform Kwargs:input:{}, result:{}'.format(kwargs,
+                                                         self._result))
         return self._result
 
     def __append_opt(self, k, v):
@@ -179,6 +196,9 @@ def make_optargs(optname, values, opt_style='posix'):
     """
     return OptionCreator(opt_style).make_optargs(optname, values)
 
+    syslog.syslog(syslog.LOG_ERR,
+                  'Executed "{}" failed, Err Msg:{}'.format(cmdstr, errmsg))
+
 # =====================
 # Exceptions Clasees
 # =====================
@@ -212,7 +232,6 @@ class CmdConfiguration(object):
     """
     def __init__(self):
         self.dry_run = False
-        self.debug = False
         self.default_opts = {}
         self.opt_style = 'posix'
 
@@ -221,6 +240,7 @@ class BaseCmd(object):
     def __init__(self, name=None):
         self.name = name or self.__class__.__name__.lower()
         self.conf = CmdConfiguration()
+        DBG("Created a {}".format(repr(self)))
 
     @property
     def opt_style(self):
@@ -268,6 +288,7 @@ class ExecutableCmd(BaseCmd):
 
         # Prepare the argument list
         call = self.make_callargs(*args, **kwargs)
+        DBG('Builded command string:{}'.format(call))
         return self.conf.dry_run and call or self.execute(call, **_kwargs)
 
     def execute(self, command, stdin=None, as_process=False, via_shell=False, with_extend_output=False):
@@ -292,6 +313,7 @@ class ExecutableCmd(BaseCmd):
         if via_shell:
             status = os.system(' '.join(command))
             if status != 0:
+                ERR(' '.join(command))
                 raise CommandExecutedError(status)
             return status
         else:
@@ -316,6 +338,7 @@ class ExecutableCmd(BaseCmd):
 
             if not with_extend_output:
                 if status != 0:
+                    ERR(' '.join(command), stderr_value)
                     raise CommandExecutedError(status, stderr_value)
                 return stdout_value
             else:
