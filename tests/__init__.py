@@ -252,6 +252,14 @@ class HelperTestCase(unittest.TestCase):
         self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
         self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
 
+    def test_global_config(self):
+        self.assertEquals('process', ucltip.global_config('execmode'))
+        ucltip.global_config(execmode='list')
+        self.assertEquals(['ls','-a','-l'], ucltip.Cmd('ls')(a=True, l=True))
+        ucltip.global_config(execmode='string')
+        self.assertEquals('apt-get install vim -t maverick',
+                          ucltip.CmdDispatcher('apt-get').install('vim',t='maverick'))
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))

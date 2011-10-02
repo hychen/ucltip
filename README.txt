@@ -293,7 +293,24 @@ regcmds is used to register multiple command in built-in environment one time
 	>>> apt_cache
 	<ucltip.CmdDispatcher object at 0xb7308bec>
 
+`global_config` is used to set up global configure of All class
+
+To change executing behavior of Cmd or CmdDispatcher
+
+::
+	# default
+	>>>ucltip.global_config(execmod='process')
+
+	# produce command arguments only, same as dry_run
+	>>>ucltip.global_config(execmod='list')
+
+	# produce command string only
+	>>>ucltip.global_config(execmod='string')
+
 Debugging
 =========
 
-ucltip provid debug output in /var/log/syslog after your set `__DEBUG` to True
+ucltip provid debug output in /var/log/syslog after you enable debug mode
+
+::
+	>>> ucltip.global_config(debug=True)

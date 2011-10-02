@@ -37,8 +37,17 @@ __all__ = ['regcmds',
            'CommandNotFound',
            'CommandExecutedError',
            'RequireParentCmd',
-           'Pipe',
-           '__DEBUG__']
+           'Pipe']
+
+# global variabl, please use global_config function to access it
+# execmode:
+#       process - run as process
+#       list    - produce command arguments list
+#       string  - produce command string
+#
+__GLOBAL_CONFIGS__ = {'execmode':'process',
+                      'dry_run':False,
+                      'debug':False}
 
 import subprocess
 import syslog
@@ -49,8 +58,6 @@ extra = {}
 if sys.platform == 'win32':
     extra = {'shell': True}
 
-__DEBUG__ = False
-
 # =====================
 # Logging functions
 # =====================
@@ -59,7 +66,7 @@ def ERR(cmdstr, errmsg='None'):
            'UCLTIP: Executed "{}" failed, Err Msg:{}'.format(cmdstr, errmsg))
 
 def DBG(msg):
-    if __DEBUG__:
+    if global_config().get('debug'):
         syslog.syslog(syslog.LOG_DEBUG, 'UCLTIP: {} '.format(msg))
 
 # =============================
@@ -104,6 +111,33 @@ def cmdexists(cmdname):
     for f in filenames:
         if executable(f):
             return True
+
+def global_config(query=None, **kwargs):
+    """set or get global configure
+
+    @param execmode: config executing mode
+
+                     avliabl value:
+                        process - run as process
+                        list    - produce command arguments list
+                        string  - produce command string
+    @param dry_run: same as execmode=list
+    @param debug:   enable debug mode
+
+    @return dict __GLOBAL_CONFIGS__
+    @example:
+
+        # get value
+        >>> global_config('dry_run')
+        # set value
+        >>> global_config(dry_run=True)
+    """
+    if kwargs:
+        __GLOBAL_CONFIGS__.update(kwargs)
+    elif query:
+        return __GLOBAL_CONFIGS__.get(query)
+    else:
+        return __GLOBAL_CONFIGS__
 
 # =====================
 # Options and Arguments
@@ -231,7 +265,7 @@ class CmdConfiguration(object):
     """Object for sharing common configurations
     """
     def __init__(self):
-        self.dry_run = False
+        self.dry_run = global_config('dry_run')
         self.default_opts = {}
         self.opt_style = 'posix'
 
@@ -289,7 +323,14 @@ class ExecutableCmd(BaseCmd):
         # Prepare the argument list
         call = self.make_callargs(*args, **kwargs)
         DBG('Builded command string:{}'.format(call))
-        return self.conf.dry_run and call or self.execute(call, **_kwargs)
+
+        # Execute
+        mode = global_config('execmode')
+        if self.conf.dry_run or mode == 'list':
+            return call
+        if mode == 'string':
+            return ' '.join(call)
+        return self.execute(call, **_kwargs)
 
     def execute(self, command, stdin=None, as_process=False, via_shell=False, with_extend_output=False):
         """execute command
