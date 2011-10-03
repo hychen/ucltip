@@ -285,6 +285,8 @@ regcmds is used to register multiple command in built-in environment one time
 	>>> sed
 	Cmd object bound 'sed'
 
+avaliabl for specify class
+
 ::
 
 	>>>ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
@@ -298,14 +300,18 @@ regcmds is used to register multiple command in built-in environment one time
 To change executing behavior of Cmd or CmdDispatcher
 
 ::
-	# default
+	# executing command, default setting
 	>>>ucltip.global_config(execmod='process')
 
 	# produce command arguments only, same as dry_run
 	>>>ucltip.global_config(execmod='list')
+	>>>ucltip.Cmd('ls')(a=True)
+	['ls', '-a']
 
 	# produce command string only
 	>>>ucltip.global_config(execmod='string')
+	>>>ucltip.Cmd('ls')(a=True)
+	'ls -a'
 
 Debugging
 =========
@@ -314,3 +320,11 @@ ucltip provid debug output in /var/log/syslog after you enable debug mode
 
 ::
 	>>> ucltip.global_config(debug=True)
+
+Get invlolved
+=============
+
+if you are interesting to help, please contact author,
+Hychen, his email is  <ossug.hychen at gmail.com>.
+
+The VCS of code is avaliabl on  http://github.com/hychen/ucltip
