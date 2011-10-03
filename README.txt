@@ -320,3 +320,11 @@ ucltip provid debug output in /var/log/syslog after you enable debug mode
 
 ::
 	>>> ucltip.global_config(debug=True)
+
+Get invlolved
+=============
+
+if you are interesting to help, please contact author,
+Hychen, his email is  <ossug.hychen at gmail.com>.
+
+The VCS of code is avaliabl on  http://github.com/hychen/ucltip
