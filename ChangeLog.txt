@@ -1,3 +1,14 @@
+2011-10-03 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.6
+	* New features:
+		* avaliable for setting global configure
+		* pipeline
+	* New Class: Pipe
+	* New Function:global_config
+	* Enhance class customiz way
+	* Rename Paramater: interact prammater -> as_process in
+			    ExecutableCmd.execute
+	* Update README.txt
+
 2011-06-28 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.5
 
 	* New features:

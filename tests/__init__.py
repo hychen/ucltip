@@ -13,36 +13,65 @@ def setup_testenv():
 
 class UtilsTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.optcreator = ucltip.OptionCreator()
+
     def test_kwargsname_to_optionname(self):
         """test transform keyword arguments's name to command's option name.
         """
-        self.assertEquals(ucltip.optname('k'), '-k')
-        self.assertEquals(ucltip.optname('key'), '--key')
-        self.assertEquals(ucltip.optname('key_one'), '--key-one')
+        # POSIX and GNU Style
+        for style in ('posix', 'gnu', 'POSIX', 'GNU'):
+            self.optcreator.set_opt_style(style)
+            self.assertEquals(self.optcreator.optname('k'), '-k')
+            self.assertEquals(self.optcreator.optname('key'), '--key')
+            self.assertEquals(self.optcreator.optname('key_one'), '--key-one')
+
+        # Java Style
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.optname('k'), '-k')
+        self.assertEquals(self.optcreator.optname('key'), '-key')
+        self.assertEquals(self.optcreator.optname('key_one'), '-key-one')
 
     def test_transform_kwargs_to_booloption(self):
         """test transform keyword to command's boolean style option.
         """
-        self.assertEquals(ucltip.transform_kwargs(0, k=True), ['-k'])
-        self.assertEquals(ucltip.transform_kwargs(1, k=True), ['-k'])
-        self.assertEquals(ucltip.transform_kwargs(0, key=True), ['--key'])
-        self.assertEquals(ucltip.transform_kwargs(1, key=True), ['--key'])
+        # POSIX and GNU
+        for style in ('posix', 'gnu'):
+            self.optcreator.set_opt_style(style)
+            self.assertEquals(self.optcreator.transform_kwargs(k=True), ['-k'])
+            self.assertEquals(self.optcreator.transform_kwargs(key=True), ['--key'])
+
+        # Java Style
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.transform_kwargs(key=True), ['-key'])
 
     def test_transform_kwargs_to_keyvauleoption(self):
         """test transform keyword to command's key-value style option name.
         """
-        self.assertEquals(ucltip.transform_kwargs(0, k=123), ['-k', '123'])
-        self.assertEquals(ucltip.transform_kwargs(1, k=123), ['-k=123'])
-        self.assertEquals(ucltip.transform_kwargs(0, key=123), ['--key', '123'])
-        self.assertEquals(ucltip.transform_kwargs(1, key=123), ['--key=123'])
+        self.optcreator.set_opt_style('posix')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k', '123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['--key', '123'])
+
+        self.optcreator.set_opt_style('gnu')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k=123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['--key=123'])
+
+        self.optcreator.set_opt_style('java')
+        self.assertEquals(self.optcreator.transform_kwargs(k=123), ['-k=123'])
+        self.assertEquals(self.optcreator.transform_kwargs(key=123), ['-key=123'])
 
     def test_make_multi_options(self):
         """test make multi option string with the same option name
         """
-        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 0),
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'posix'),
                           ['--colum','first', '--colum', 'second'])
-        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 1),
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'gnu'),
                           ['--colum=first','--colum=second'])
+        self.assertEquals(ucltip.make_optargs('colum', ('first','second'), 'java'),
+                          ['-colum=first','-colum=second'])
+        # exception check
+        self.assertRaises(ucltip.NotValideOptStyle, ucltip.make_optargs, 'colum', ('first','second'), 0)
+        self.assertRaises(ucltip.NotValideOptStyle, ucltip.make_optargs, 'colum', ('first','second'), 1)
 
     def test_cmdexist(self):
         """check commands exists """
@@ -66,12 +95,12 @@ class ExecuteCmdTestCase(unittest.TestCase):
 
     def test_call(self):
         self.assertEquals(self.expr('3', '+', '4'), '7\n')
-        self.assertRaises(ucltip.CommandExecutedFalur, self.expr, '3', '5', '4')
+        self.assertRaises(ucltip.CommandExecutedError, self.expr, '3', '5', '4')
         self.assertEquals(self.expr('3', '+', '4', via_shell=True), 0)
 
     def test_pipe(self):
         """test command pipe line"""
-        first_cmd = self.expr('3','+','4', interact=True)
+        first_cmd = self.expr('3','+','4', as_process=True)
         second_cmd = self.sed
         self.assertEquals('A\n', second_cmd('s/7/A/', stdin=first_cmd.stdout))
 
@@ -110,7 +139,7 @@ class SubCmdTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.psubcmd('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.psubcmd('vim', test='maverick'))
         # check another option style
-        self.parent.opt_style = 1
+        self.parent.opt_style = 'gnu'
         self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.psubcmd('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.psubcmd('vim', test='maverick'))
 
@@ -130,7 +159,7 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test maverick\n', self.cmdd.install('vim', test='maverick'))
         # check another option style
-        self.cmdd.opt_style = 1
+        self.cmdd.opt_style = 'gnu'
         self.assertEquals('ucltip-apt-get install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
         self.assertEquals('ucltip-apt-get install vim --test=maverick\n', self.cmdd.install('vim', test='maverick'))
         # check another sub command prefix
@@ -138,15 +167,23 @@ class CmdDispatcherTestCase(unittest.TestCase):
         self.assertEquals('ucltip-apt-get --install vim -t=maverick\n', self.cmdd.install('vim', t='maverick'))
 
     def test_opts(self):
-        """test option of cmd dispatcher"""
+        """test setting default options of cmd dispatcher"""
         self.cmdd.opts(def_opt=1)
         self.assertEquals('ucltip-apt-get install vim --def-opt 1 -t maverick\n', self.cmdd.install('vim', t='maverick'))
         self.cmdd.opts(def_opt=False)
         self.assertEquals('ucltip-apt-get install vim -t maverick\n', self.cmdd.install('vim', t='maverick'))
 
     def test_subcmd_prefix(self):
+        """test setting subcmd_prefix of cmd dispatcher"""
         self.cmdd.subcmd_prefix = '--'
         self.assertEquals('ucltip-apt-get --install\n', self.cmdd.install())
+
+    def test_opt_style(self):
+        """test setting option style of cmd dispatcher"""
+        self.cmdd.conf.opt_style = 'gnu'
+        self.assertEquals('ucltip-apt-get install --test=1\n', self.cmdd.install(test=1))
+        self.cmdd.conf.opt_style = 'java'
+        self.assertEquals('ucltip-apt-get install -test=1\n', self.cmdd.install(test=1))
 
 class CustomClassTestCase(unittest.TestCase):
 
@@ -154,6 +191,55 @@ class CustomClassTestCase(unittest.TestCase):
         class LS(ucltip.Cmd):
             pass
         self.assertEquals(LS().name, 'ls')
+
+    def test_cmdd(self):
+        class Zenity(ucltip.CmdDispatcher):
+            def __init__(self):
+                super(Zenity, self).__init__()
+                self.subcmd_prefix = '--'
+                self.conf.opt_style = 'gnu'
+                self.conf.dry_run = True
+
+                self.error = lambda *args, **kwargs:    self.call('error', *args, **kwargs)
+
+            def info(self, *args, **kwargs):
+                kwargs['text']='hi'
+                return self.getsubcmd('info')(*args, **kwargs)
+
+            def call(self, name, *args, **kwargs):
+                return args, kwargs
+
+        self.assertEquals(['zenity', '--info', '--text=hi'], Zenity().info())
+        self.assertEquals(((1,2,3), {'a':1}), Zenity().error(1,2,3, a=1))
+
+class PipeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.pipe = ucltip.Pipe()
+
+    def tearDown(self):
+        del self.pipe
+
+    def test_cmd_obj_param(self):
+        self.pipe.add(ucltip.Cmd('expr'), 1, '+', 3)
+        self.pipe.add(ucltip.Cmd('sed'), 's/4/8/', posix=True)
+        self.pipe.wait()
+        self.assertEquals('8\n', self.pipe.stdout.read())
+
+    def test_cmdd_obj_param(self):
+        self.pipe.add(ucltip.CmdDispatcher('apt-cache').search, 'vim-common', q=True)
+        self.pipe.add(ucltip.Cmd('awk'), '{ print $1 }')
+        self.pipe.wait()
+        self.assertEquals('vim-common\n', self.pipe.stdout.read())
+
+    def test_cmd_str_param(self):
+        self.pipe.add('expr', 1, '+', 3)
+        self.pipe.add('sed', 's/4/8/', '--posix')
+        self.pipe.wait()
+        self.assertEquals('8\n', self.pipe.stdout.read())
+
+    def test_exception(self):
+        self.assertRaises(ucltip.PipeError, self.pipe.wait)
 
 class HelperTestCase(unittest.TestCase):
 
@@ -166,6 +252,14 @@ class HelperTestCase(unittest.TestCase):
         self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
         self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
 
+    def test_global_config(self):
+        self.assertEquals('process', ucltip.global_config('execmode'))
+        ucltip.global_config(execmode='list')
+        self.assertEquals(['ls','-a','-l'], ucltip.Cmd('ls')(a=True, l=True))
+        ucltip.global_config(execmode='string')
+        self.assertEquals('apt-get install vim -t maverick',
+                          ucltip.CmdDispatcher('apt-get').install('vim',t='maverick'))
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UtilsTestCase, 'test'))
@@ -173,6 +267,7 @@ def suite():
     suite.addTest(unittest.makeSuite(SubCmdTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CmdDispatcherTestCase, 'test'))
     suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(PipeTestCase, 'test'))
     suite.addTest(unittest.makeSuite(HelperTestCase, 'test'))
     return suite
 

@@ -82,7 +82,7 @@ if the command you want to use is not exists, the exception ucltip.CommandNotFou
 	    raise CommandNotFound()
 	ucltip.CommandNotFound
 
-if the command be executed falied, the exception ucltip.CommandExecutedFalur raises
+if the command be executed falied, the exception ucltip.CommandExecutedError raises
 
 ::
 
@@ -97,8 +97,8 @@ if the command be executed falied, the exception ucltip.CommandExecutedFalur rai
 	  File "ucltip/__init__.py", line 126, in _callProcess
 	    return self.execute(call, **_kwargs)
 	  File "ucltip/__init__.py", line 169, in execute
-	    raise CommandExecutedFalur(status, stderr_value)
-	ucltip.CommandExecutedFalur: ls: unrecognized option '--ccc'
+	    raise CommandExecutedError(status, stderr_value)
+	ucltip.CommandExecutedError: ls: unrecognized option '--ccc'
 	Try `ls --help' for more information.
 
 here is a example to hanlde error:
@@ -107,7 +107,7 @@ here is a example to hanlde error:
 
 	try:
 		print ucltip.Cmd('ls')
-	except ucltip.CommandExecutedFalur as e:
+	except ucltip.CommandExecutedError as e:
 		print e
 
 --------------
@@ -137,10 +137,13 @@ arguments will be coverted to command key-value option, for example, '--quoting_
 	>>>ls('tmp', quoting_style='c')
 	['ls', '--quoting-style', 'c']
 
-also, you can change option style by set '''opt_style''' attribute
+also, you can change option style by set '''opt_style''' attribute, support option style are `gnu`,
+`posix`,`java`, the default value is `posix`.
+
+note: java option style is not fully supported.
 
 ::
-	>>>ls.conf.opt_style = 1
+	>>>ls.conf.opt_style = 'gnu'
 	>>>ls('tmp', quoting_style='c')
 	['ls', '--quoting-style=c']
 
@@ -210,6 +213,63 @@ CmdDispatcher sub command will load default options from its parent, in this cas
 	>>>apt_get.install('vim')
 	['apt-get', 'install', 'vim']
 
+Pipe
+====
+In subprocess, the way for doing pipeline is
+
+::
+
+	>>>p1 = Popen(["dmesg"], stdout=PIPE)
+	>>>p2 = Popen(["grep", "hda"], stdin=p1.stdout, stdout=PIPE)
+	>>>output = p2.communicate()[0]
+
+which is not convenience when you want to pipe many commands.
+
+Pipe class provide similar interface as C library `libpipeline` (http://libpipeline.nongnu.org/)
+that manipulating pipelines of subprocesses in a flexible and convenient way in C.
+
+firstly, you need to create a Pipe instance
+
+::
+	>>>pipe = ucltip.Pipe()
+
+and then add some command arguments as you want
+
+::
+
+	>>>pipe.add('expr', 1, '+' 3)
+	>>>pipe.add('sed', 's/4/5/', '--posix')
+
+finally run the process, wait it terminate and get its output
+
+::
+
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+	5
+	# get error message in case command executed error
+	>>>pipe.stderr.read()
+
+the first argument of Pipe.add function can be Cmd or SubCmd,
+please remaind the usage of add function is changed in this case
+
+::
+	>>>pipe = ucltip.Pipe()
+	>>>pipe.add(Cmd('expr'), 1, '+', 3)
+	>>>pipe.add(Cmd('sed'), 's/4/5', posix=True)
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+	5
+
+::
+
+	>>>apt_cache = ucltip.CmdDispatcher('apt-cache')
+	>>>pipe = ucltip.Pipe()
+	>>>pipe.add(apt_cache.search, 'vim-common')
+	>>>pipe.add(Cmd('grep'), 'vim')
+	>>>pipe.wait()
+	>>>pipe.stdout.read()
+
 Helper
 ======
 
@@ -225,6 +285,8 @@ regcmds is used to register multiple command in built-in environment one time
 	>>> sed
 	Cmd object bound 'sed'
 
+avaliabl for specify class
+
 ::
 
 	>>>ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
@@ -232,3 +294,37 @@ regcmds is used to register multiple command in built-in environment one time
 	<ucltip.CmdDispatcher object at 0xb7305dcc>
 	>>> apt_cache
 	<ucltip.CmdDispatcher object at 0xb7308bec>
+
+`global_config` is used to set up global configure of All class
+
+To change executing behavior of Cmd or CmdDispatcher
+
+::
+	# executing command, default setting
+	>>>ucltip.global_config(execmod='process')
+
+	# produce command arguments only, same as dry_run
+	>>>ucltip.global_config(execmod='list')
+	>>>ucltip.Cmd('ls')(a=True)
+	['ls', '-a']
+
+	# produce command string only
+	>>>ucltip.global_config(execmod='string')
+	>>>ucltip.Cmd('ls')(a=True)
+	'ls -a'
+
+Debugging
+=========
+
+ucltip provid debug output in /var/log/syslog after you enable debug mode
+
+::
+	>>> ucltip.global_config(debug=True)
+
+Get invlolved
+=============
+
+if you are interesting to help, please contact author,
+Hychen, his email is  <ossug.hychen at gmail.com>.
+
+The VCS of code is avaliabl on  http://github.com/hychen/ucltip
