@@ -1,3 +1,19 @@
+python-ucltip (0.6-1) unstable; urgency=low
+
+  * 0.6-1 released
+    * New features:
+           * available for setting global configure
+           * pipeline
+    * New Class: Pipe
+    * New Function:global_config
+    * Enhance class customiz way
+    * Rename Parameter: interact parameter -> as_process in
+                        ExecutableCmd.execute
+    * Update README.txt
+  * Convert dh_support to dh_python2 an add X-Python-Version
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Mon, 03 Oct 2011 08:26:24 +0800
+
 python-ucltip (0.5-1) unstable; urgency=low
 
   * 0.5-1 released
