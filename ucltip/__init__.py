@@ -302,7 +302,7 @@ class BaseCmd(object):
 
 class ExecutableCmd(BaseCmd):
 
-    execute_kwargs = ('stdin','as_process', 'via_shell', 'with_extend_output')
+    execute_kwargs = ('stdin','as_process', 'via_shell', 'with_extend_output', 'cwd')
 
     def __call__(self, *args, **kwargs):
         return self._callProcess(*args, **kwargs)
@@ -332,13 +332,16 @@ class ExecutableCmd(BaseCmd):
             return ' '.join(call)
         return self.execute(call, **_kwargs)
 
-    def execute(self, command, stdin=None, as_process=False, via_shell=False, with_extend_output=False):
+    def execute(self, command, stdin=None, as_process=False,
+                via_shell=False, with_extend_output=False, cwd=None):
         """execute command
 
         @param subprocess.PIPE stdin
-        @param bool as_process retrun Popen instance if as_process is True for
-               more control
-        @param bool via_shell use os.system instead of subprocess.call
+        @param bool as_process  retrun Popen instance if as_process is True for
+                                more control
+        @param bool via_shell   use os.system instead of subprocess.call
+        @param str   cwd       If cwd is not None, the current directory will be changed to cwd
+                                before the child is executed
         @return str execited result (as_process musc be False)
 
         @example
@@ -363,6 +366,7 @@ class ExecutableCmd(BaseCmd):
                                     stdin=stdin,
                                     stderr=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
+                                    cwd=cwd,
                                     **extra
                                     )
             if as_process:
