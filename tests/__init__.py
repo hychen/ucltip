@@ -252,6 +252,10 @@ class HelperTestCase(unittest.TestCase):
         self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
         self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
 
+    def test_regcmddispatcher(self):
+        ucltip.regcmds('apt-get')
+        self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
+
     def test_global_config(self):
         self.assertEquals('process', ucltip.global_config('execmode'))
         ucltip.global_config(execmode='list')

@@ -49,6 +49,17 @@ __GLOBAL_CONFIGS__ = {'execmode':'process',
                       'dry_run':False,
                       'debug':False}
 
+# commands has sub command list
+# which is used in regcmds function
+# for selecting right class
+__CMDDISPATCHERS_LIST__ = (
+        'apt-get',
+        'apt-cache',
+        'pbuilder',
+        'cowbuilder',
+        'bzr',
+        'git')
+
 import subprocess
 import syslog
 import sys
@@ -81,6 +92,8 @@ def regcmds(*args, **kwargs):
     cls = kwargs.get('cls') or Cmd
     assert cls in (Cmd, CmdDispatcher)
     for cmdname in args:
+        if cmdname in __CMDDISPATCHERS_LIST__:
+            cls = CmdDispatcher
         __builtin__.__dict__[undashify(cmdname)] = cls(cmdname)
 
 def double_dashify(string):
