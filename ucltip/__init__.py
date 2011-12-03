@@ -46,6 +46,7 @@ __all__ = ['regcmds',
 #       string  - produce command string
 #
 __GLOBAL_CONFIGS__ = {'execmode':'process',
+                      'via_shell': False,
                       'dry_run':False,
                       'debug':False}
 
@@ -367,7 +368,7 @@ class ExecutableCmd(BaseCmd):
             "You can not get a Popen instance when you want to execute command in shell."
         assert not (stdin and via_shell),\
             "You can not use stdin and via_shell in the same time."
-        if via_shell:
+        if global_config('via_shell') or via_shell:
             status = os.system(' '.join(command))
             if status != 0:
                 ERR(' '.join(command))
