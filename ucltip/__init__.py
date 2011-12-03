@@ -244,9 +244,6 @@ def make_optargs(optname, values, opt_style='posix'):
     """
     return OptionCreator(opt_style).make_optargs(optname, values)
 
-    syslog.syslog(syslog.LOG_ERR,
-                  'Executed "{}" failed, Err Msg:{}'.format(cmdstr, errmsg))
-
 # =====================
 # Exceptions Clasees
 # =====================
