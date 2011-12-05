@@ -1,7 +1,8 @@
 Source: python-ucltip
 Section: python
 Priority: optional
-Maintainer: Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>
+Maintainer: Hsin-Yi Chen (hychen) <hychen@ubuntu.com>
+XSBC-Original-Maintainer: Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>
 Build-Depends: python-all (>= 2.6.6-3), debhelper (>= 7)
 Standards-Version: 3.9.2
 Homepage: http://pypi.python.org/pypi/ucltip
