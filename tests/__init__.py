@@ -243,17 +243,31 @@ class PipeTestCase(unittest.TestCase):
 
 class HelperTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self._cmds = []
+
+    def tearDown(self):
+        import __builtin__
+        for varname in self._cmds:
+            del __builtin__.__dict__[varname]
+
+    def _regcmds(self, *args, **kwargs):
+        for cmd in args:
+            if cmd not in self._cmds:
+                self._cmds.append(ucltip.undashify(cmd))
+        ucltip.regcmds(*args, **kwargs)
+
     def test_call(self):
-        ucltip.regcmds('ls', 'sed')
+        self._regcmds('ls', 'sed')
         self.assertEquals(type(ls), ucltip.Cmd)
         self.assertEquals(type(sed), ucltip.Cmd)
-        ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
+        self._regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
         self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
         self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
-        self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
+        self.assertRaises(AssertionError, self._regcmds, 'ls', cls=type)
 
     def test_regcmddispatcher(self):
-        ucltip.regcmds('apt-get')
+        self._regcmds('apt-get')
         self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
 
 class GlobalConfigTestCase(unittest.TestCase):
