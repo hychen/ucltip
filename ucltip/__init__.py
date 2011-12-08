@@ -28,7 +28,8 @@ The module contains the following public classes:
     - CmdDispatcher -- Object for mapping a command has sub commands
 """
 
-__all__ = ['regcmds',
+__all__ = ['global_config',
+           'regcmds',
            'make_optargs',
            'cmdexists',
            'Cmd',
