@@ -256,10 +256,20 @@ class HelperTestCase(unittest.TestCase):
         ucltip.regcmds('apt-get')
         self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
 
-    def test_global_config(self):
-        self.assertEquals('process', ucltip.global_config('execmode'))
+class GlobalConfigTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.default_config = ucltip.global_config()
+
+    def tearDown(self):
+        ucltip.__GLOBAL_CONFIG__ = self.default_config
+        self.assertEquals(self.default_config, ucltip.global_config())
+
+    def test_execmode_list(self):
         ucltip.global_config(execmode='list')
         self.assertEquals(['ls','-a','-l'], ucltip.Cmd('ls')(a=True, l=True))
+
+    def test_execmode_string(self):
         ucltip.global_config(execmode='string')
         self.assertEquals('apt-get install vim -t maverick',
                           ucltip.CmdDispatcher('apt-get').install('vim',t='maverick'))
@@ -273,6 +283,7 @@ def suite():
     suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
     suite.addTest(unittest.makeSuite(PipeTestCase, 'test'))
     suite.addTest(unittest.makeSuite(HelperTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(GlobalConfigTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':
