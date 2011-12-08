@@ -248,7 +248,12 @@ def make_optargs(optname, values, opt_style='posix'):
 # Exceptions Clasees
 # =====================
 class CommandNotFound(Exception):
-    pass
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.errmsg = 'command {} not found'.format(self.cmd)
+
+    def __str__(self):
+        return self.errmsg
 
 class CommandExecutedError(Exception):
 
@@ -423,7 +428,7 @@ class Cmd(ExecutableCmd):
     def __init__(self, name=None):
         super(Cmd, self).__init__(name)
         if not cmdexists(self.name):
-            raise CommandNotFound
+            raise CommandNotFound(self.name)
 
 class SubCmd(ExecutableCmd):
     """Object for mapping a sub command, this object can not be executed without
@@ -474,7 +479,7 @@ class CmdDispatcher(BaseCmd):
         self._subcmds = {}
         super(CmdDispatcher, self).__init__(name)
         if not cmdexists(self.name):
-            raise CommandNotFound
+            raise CommandNotFound(self.name)
 
     def __getattr__(self, name):
         if name[:1] == '_':
