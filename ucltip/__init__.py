@@ -92,7 +92,7 @@ def regcmds(*args, **kwargs):
     """
     import __builtin__
     cls = kwargs.get('cls') or Cmd
-    assert cls in (Cmd, CmdDispatcher)
+    assert cls in (Cmd, CmdDispatcher), 'cls should be Cmd or CmdDispatcher class'
     for cmdname in args:
         if cmdname in __CMDDISPATCHERS_LIST__:
             cls = CmdDispatcher
