@@ -1,3 +1,10 @@
+python-ucltip (0.6+git08dec97-1) unstable; urgency=low
+
+  * 0.6+git08dec97-1 released
+    * snapshot of 0.7
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Tue, 13 Dec 2011 20:03:45 +0800
+
 python-ucltip (0.6-3) unstable; urgency=low
 
   * 0.6-3 released
