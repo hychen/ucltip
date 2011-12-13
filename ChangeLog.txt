@@ -1,3 +1,17 @@
+XXXX-XX-XX Hsin-Yi Chen <ossug.hychen@gmail.com> - UNRELEASED
+	* New features:
+		* global_config to change variables
+			- via_shell: set all command executed in os.system
+		* support to specifcy current directory when running a command
+		* regcmds can recongize the commands shold be use CmdDispatcher
+		class (very limitated)
+	* New Test Case
+		* GlobalConfigTestCase
+	* Enhancement:
+		* CommandNotFound to knows which command be used
+	* Fix:
+		* HelperTestCase don't reset __builtin__ to default
+
 2011-10-03 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.6
 	* New features:
 		* avaliable for setting global configure

@@ -295,6 +295,11 @@ avaliabl for specify class
 	>>> apt_cache
 	<ucltip.CmdDispatcher object at 0xb7308bec>
 
+ucltip can also check the command name you want to register is in the list that
+command has sub command or not for reduce the class to CmdDispatcher by auto.
+
+the list is ucltip.__CMDDISPATCHERS_LIST__, request to add new command are welcome
+
 `global_config` is used to set up global configure of All class
 
 To change executing behavior of Cmd or CmdDispatcher
@@ -312,6 +317,11 @@ To change executing behavior of Cmd or CmdDispatcher
 	>>>ucltip.global_config(execmod='string')
 	>>>ucltip.Cmd('ls')(a=True)
 	'ls -a'
+
+To force all command executed by os.system
+
+::
+	>>>ucltip.global_config(via_shell=True)
 
 Debugging
 =========

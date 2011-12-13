@@ -243,19 +243,47 @@ class PipeTestCase(unittest.TestCase):
 
 class HelperTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self._cmds = []
+
+    def tearDown(self):
+        import __builtin__
+        for varname in self._cmds:
+            del __builtin__.__dict__[varname]
+
+    def _regcmds(self, *args, **kwargs):
+        for cmd in args:
+            if cmd not in self._cmds:
+                self._cmds.append(ucltip.undashify(cmd))
+        ucltip.regcmds(*args, **kwargs)
+
     def test_call(self):
-        ucltip.regcmds('ls', 'sed')
+        self._regcmds('ls', 'sed')
         self.assertEquals(type(ls), ucltip.Cmd)
         self.assertEquals(type(sed), ucltip.Cmd)
-        ucltip.regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
+        self._regcmds('apt-get', 'apt-cache', cls=ucltip.CmdDispatcher)
         self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
         self.assertEquals(type(apt_cache), ucltip.CmdDispatcher)
-        self.assertRaises(AssertionError, ucltip.regcmds, 'ls', cls=type)
+        self.assertRaises(AssertionError, self._regcmds, 'ls', cls=type)
 
-    def test_global_config(self):
-        self.assertEquals('process', ucltip.global_config('execmode'))
+    def test_regcmddispatcher(self):
+        self._regcmds('apt-get')
+        self.assertEquals(type(apt_get), ucltip.CmdDispatcher)
+
+class GlobalConfigTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.default_config = ucltip.global_config()
+
+    def tearDown(self):
+        ucltip.__GLOBAL_CONFIG__ = self.default_config
+        self.assertEquals(self.default_config, ucltip.global_config())
+
+    def test_execmode_list(self):
         ucltip.global_config(execmode='list')
         self.assertEquals(['ls','-a','-l'], ucltip.Cmd('ls')(a=True, l=True))
+
+    def test_execmode_string(self):
         ucltip.global_config(execmode='string')
         self.assertEquals('apt-get install vim -t maverick',
                           ucltip.CmdDispatcher('apt-get').install('vim',t='maverick'))
@@ -269,6 +297,7 @@ def suite():
     suite.addTest(unittest.makeSuite(CustomClassTestCase, 'test'))
     suite.addTest(unittest.makeSuite(PipeTestCase, 'test'))
     suite.addTest(unittest.makeSuite(HelperTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(GlobalConfigTestCase, 'test'))
     return suite
 
 if __name__ == '__main__':
