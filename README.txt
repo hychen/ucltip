@@ -318,6 +318,11 @@ To change executing behavior of Cmd or CmdDispatcher
 	>>>ucltip.Cmd('ls')(a=True)
 	'ls -a'
 
+To force all command executed by os.system
+
+::
+	>>>ucltip.global_config(via_shell=True)
+
 Debugging
 =========
 
