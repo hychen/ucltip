@@ -1,3 +1,10 @@
+python-ucltip (0.6+git08dec97-2) unstable; urgency=low
+
+  * fix missing dependency on python (Closes: #652299)
+    - debian/rules - add --buildsystem=python_distutils --with python2
+
+ -- Hsin-Yi Chen (hychen) <ossug.hychen@gmail.com>  Fri, 16 Dec 2011 23:27:20 +0800
+
 python-ucltip (0.6+git08dec97-1) unstable; urgency=low
 
   * 0.6+git08dec97-1 released
