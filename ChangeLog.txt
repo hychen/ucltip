@@ -1,4 +1,4 @@
-XXXX-XX-XX Hsin-Yi Chen <ossug.hychen@gmail.com> - UNRELEASED
+2011-12-20 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.7
 	* New features:
 		* global_config to change variables
 			- via_shell: set all command executed in os.system
@@ -11,6 +11,7 @@ XXXX-XX-XX Hsin-Yi Chen <ossug.hychen@gmail.com> - UNRELEASED
 		* CommandNotFound to knows which command be used
 	* Fix:
 		* HelperTestCase don't reset __builtin__ to default
+		* setup.py - does not include non-ucltip python file in tar bar
 
 2011-10-03 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.6
 	* New features:
