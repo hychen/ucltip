@@ -7,3 +7,4 @@ build
 dist
 bdist
 debian/files
+MANIFEST
