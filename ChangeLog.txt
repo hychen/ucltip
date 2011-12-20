@@ -1,3 +1,7 @@
+2011-12-20 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.7.1
+	* Fix:
+		* Missing VERSION.txt, MANIFEST.in
+
 2011-12-20 Hsin-Yi Chen <ossug.hychen@gmail.com> - 0.7
 	* New features:
 		* global_config to change variables
