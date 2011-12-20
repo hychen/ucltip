@@ -28,7 +28,8 @@ The module contains the following public classes:
     - CmdDispatcher -- Object for mapping a command has sub commands
 """
 
-__all__ = ['regcmds',
+__all__ = ['global_config',
+           'regcmds',
            'make_optargs',
            'cmdexists',
            'Cmd',
@@ -46,8 +47,20 @@ __all__ = ['regcmds',
 #       string  - produce command string
 #
 __GLOBAL_CONFIGS__ = {'execmode':'process',
+                      'via_shell': False,
                       'dry_run':False,
                       'debug':False}
+
+# commands has sub command list
+# which is used in regcmds function
+# for selecting right class
+__CMDDISPATCHERS_LIST__ = (
+        'apt-get',
+        'apt-cache',
+        'pbuilder',
+        'cowbuilder',
+        'bzr',
+        'git')
 
 import subprocess
 import syslog
@@ -79,8 +92,10 @@ def regcmds(*args, **kwargs):
     """
     import __builtin__
     cls = kwargs.get('cls') or Cmd
-    assert cls in (Cmd, CmdDispatcher)
+    assert cls in (Cmd, CmdDispatcher), 'cls should be Cmd or CmdDispatcher class'
     for cmdname in args:
+        if cmdname in __CMDDISPATCHERS_LIST__:
+            cls = CmdDispatcher
         __builtin__.__dict__[undashify(cmdname)] = cls(cmdname)
 
 def double_dashify(string):
@@ -230,14 +245,16 @@ def make_optargs(optname, values, opt_style='posix'):
     """
     return OptionCreator(opt_style).make_optargs(optname, values)
 
-    syslog.syslog(syslog.LOG_ERR,
-                  'Executed "{}" failed, Err Msg:{}'.format(cmdstr, errmsg))
-
 # =====================
 # Exceptions Clasees
 # =====================
 class CommandNotFound(Exception):
-    pass
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.errmsg = 'command {} not found'.format(self.cmd)
+
+    def __str__(self):
+        return self.errmsg
 
 class CommandExecutedError(Exception):
 
@@ -302,7 +319,7 @@ class BaseCmd(object):
 
 class ExecutableCmd(BaseCmd):
 
-    execute_kwargs = ('stdin','as_process', 'via_shell', 'with_extend_output')
+    execute_kwargs = ('stdin','as_process', 'via_shell', 'with_extend_output', 'cwd')
 
     def __call__(self, *args, **kwargs):
         return self._callProcess(*args, **kwargs)
@@ -332,13 +349,16 @@ class ExecutableCmd(BaseCmd):
             return ' '.join(call)
         return self.execute(call, **_kwargs)
 
-    def execute(self, command, stdin=None, as_process=False, via_shell=False, with_extend_output=False):
+    def execute(self, command, stdin=None, as_process=False,
+                via_shell=False, with_extend_output=False, cwd=None):
         """execute command
 
         @param subprocess.PIPE stdin
-        @param bool as_process retrun Popen instance if as_process is True for
-               more control
-        @param bool via_shell use os.system instead of subprocess.call
+        @param bool as_process  retrun Popen instance if as_process is True for
+                                more control
+        @param bool via_shell   use os.system instead of subprocess.call
+        @param str   cwd       If cwd is not None, the current directory will be changed to cwd
+                                before the child is executed
         @return str execited result (as_process musc be False)
 
         @example
@@ -351,7 +371,7 @@ class ExecutableCmd(BaseCmd):
             "You can not get a Popen instance when you want to execute command in shell."
         assert not (stdin and via_shell),\
             "You can not use stdin and via_shell in the same time."
-        if via_shell:
+        if global_config('via_shell') or via_shell:
             status = os.system(' '.join(command))
             if status != 0:
                 ERR(' '.join(command))
@@ -363,6 +383,7 @@ class ExecutableCmd(BaseCmd):
                                     stdin=stdin,
                                     stderr=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
+                                    cwd=cwd,
                                     **extra
                                     )
             if as_process:
@@ -408,7 +429,7 @@ class Cmd(ExecutableCmd):
     def __init__(self, name=None):
         super(Cmd, self).__init__(name)
         if not cmdexists(self.name):
-            raise CommandNotFound
+            raise CommandNotFound(self.name)
 
 class SubCmd(ExecutableCmd):
     """Object for mapping a sub command, this object can not be executed without
@@ -459,7 +480,7 @@ class CmdDispatcher(BaseCmd):
         self._subcmds = {}
         super(CmdDispatcher, self).__init__(name)
         if not cmdexists(self.name):
-            raise CommandNotFound
+            raise CommandNotFound(self.name)
 
     def __getattr__(self, name):
         if name[:1] == '_':
