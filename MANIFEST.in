@@ -1,3 +1,2 @@
-recursive-include scripts *
-inlcude *.txt
-include AUTHORS
+include *
+exclude .gitignore MANIFEST
