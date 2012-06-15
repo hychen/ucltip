@@ -27,6 +27,7 @@ The module contains the following public classes:
     - Cmd -- Object for mapping a command has no sub commands
     - CmdDispatcher -- Object for mapping a command has sub commands
 """
+from __future__ import absolute_import, print_function, unicode_literals
 
 __all__ = ['global_config',
            'regcmds',
@@ -90,13 +91,16 @@ def regcmds(*args, **kwargs):
 
     @param cls Cmd or CmdDispatcher
     """
-    import __builtin__
+    if sys.version_info.major < 3:
+        import __builtin__ as builtins
+    else:
+        import builtins
     cls = kwargs.get('cls') or Cmd
     assert cls in (Cmd, CmdDispatcher), 'cls should be Cmd or CmdDispatcher class'
     for cmdname in args:
         if cmdname in __CMDDISPATCHERS_LIST__:
             cls = CmdDispatcher
-        __builtin__.__dict__[undashify(cmdname)] = cls(cmdname)
+        builtins.__dict__[undashify(cmdname)] = cls(cmdname)
 
 def double_dashify(string):
     """add double dashify prefix in a string
@@ -207,7 +211,7 @@ class OptionCreator(object):
         @return list args for subprocess.call
         """
         self._result = []
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             self.__append_opt(k, v)
         DBG('Trasform Kwargs:input:{}, result:{}'.format(kwargs,
                                                          self._result))
@@ -378,6 +382,7 @@ class ExecutableCmd(BaseCmd):
                 raise CommandExecutedError(status)
             return status
         else:
+            extra['universal_newlines'] = True
             # Start the process
             proc = subprocess.Popen(command,
                                     stdin=stdin,
@@ -409,7 +414,7 @@ class ExecutableCmd(BaseCmd):
     def make_callargs(self, *args, **kwargs):
         # Prepare the argument list
         opt_args = OptionCreator(self.conf.opt_style).transform_kwargs(**kwargs)
-        ext_args = map(str, args)
+        ext_args = list(map(str, args))
         args = ext_args + opt_args
         return [self.name] + args
 

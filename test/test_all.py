@@ -2,6 +2,7 @@
 # -*- encoding=utf8 -*-
 #
 # Author 2011 Hsin-Yi Chen
+import sys
 import os
 import unittest
 import ucltip
@@ -247,9 +248,12 @@ class HelperTestCase(unittest.TestCase):
         self._cmds = []
 
     def tearDown(self):
-        import __builtin__
+        if sys.version_info.major < 3:
+            import __builtin__ as builtins
+        else:
+            import builtins
         for varname in self._cmds:
-            del __builtin__.__dict__[varname]
+            del builtins.__dict__[varname]
 
     def _regcmds(self, *args, **kwargs):
         for cmd in args:
